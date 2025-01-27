@@ -19,6 +19,7 @@ t_list *lexer(char* input)
                 case ' ':
                         break;
                 case '|':
+                case '$':
                         ft_lstadd_back(&lst, ft_lstnew(ft_substr(input, i, 1)));
                         break;
                 case '<':
