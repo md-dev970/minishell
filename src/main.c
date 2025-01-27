@@ -24,9 +24,8 @@ int is_separator(char *str, size_t i, size_t len)
         return -1;
 }
 
-t_list *lexer(char* input)
+char *lexer(t_list **lst, char* input)
 {
-        t_list *lst = NULL;
         size_t len = ft_strlen(input);
         size_t j;
         char open_quote = '\0';
@@ -37,15 +36,15 @@ t_list *lexer(char* input)
                         break;
                 case '|':
                 case '$':
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(input, i, 1)));
+                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 1)));
                         break;
                 case '<':
                 case '>':
                         if (i == len - 1 || input[i + 1] != input[i]) {
-                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(input, i, 1)));
+                                ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 1)));
                                 break;
                         }
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(input, i, 2)));
+                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 2)));
                         i++;
                         break;
                 case '\'':
@@ -54,18 +53,18 @@ t_list *lexer(char* input)
                                 open_quote = input[i];
                         else if (open_quote == input[i])
                                 open_quote = '\0';
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(input, i, 1)));
+                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 1)));
                         break;
                 default:
                         j = i + 1;
                         while (j < len && is_separator(input, j, len) == -1)
                                 j++;
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(input, i, j - i)));
+                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, j - i)));
                         i = j - 1;
                         break;
                 }
         }
-        return lst;
+        return (open_quote) ? 1 : 0;
 }
 
 void print_lexems(void *lexems)
@@ -84,19 +83,25 @@ int main()
 {
         int quit = 0;
         char *inputBuffer;
-        t_list *lexems;
+        t_list *lexems = NULL;
 
         while(quit == 0) {
 
                 inputBuffer = readline("minishell>");
 
-                lexems = lexer(inputBuffer);
+                int r = lexer(&lexems, inputBuffer);
+                while (r) {
+                        free(inputBuffer);
+                        inputBuffer = readline(">");
+                        r = lexer(&lexems, inputBuffer);
+                };
 
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
                 ft_lstiter(lexems, &print_lexems);
                 ft_lstclear(lexems, &free);
+                lexems = NULL;
         }
         rl_clear_history();
 
