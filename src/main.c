@@ -7,6 +7,23 @@
 char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
 char *s[8] = {" ", ">", "<", "<<", ">>", "|", "\"", "'"};
 
+int is_separator(char *str, size_t i, size_t len)
+{
+        for (size_t j = 0; j < 8; ++j) {
+                if (str[i] == *s[j]) {
+                        if ((str[i] == '<' && i < len - 1 && str[i + 1] == '<')
+                        || (str[i] == '>' && i < len - 1 && str[i + 1] == '>'))
+                                return 2;
+                        else if (str[i] != ' ')
+                                return 1;
+                        else if (str[i] == '\"' || str[i] == '\'')
+                                return 0;
+                }
+                        
+        }
+        return -1;
+}
+
 t_list *lexer(char* input)
 {
         t_list *lst = NULL;
