@@ -7,13 +7,11 @@
 char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
 char *s[8] = {" ", ">", "<", "<<", ">>", "|", "\"", "'"};
 
-int is_separator(char *str, size_t i, size_t len)
+int is_separator(char *str, size_t i)
 {
         for (size_t j = 0; j < 8; ++j) {
-                if (str[i] == *s[j]) {
-                        return 1;
-                }
-                        
+                if (str[i] == *s[j])
+                        return 1;     
         }
         return 0;
 }
@@ -51,7 +49,7 @@ int lexer(t_list **lst, char* input)
                         break;
                 default:
                         j = i + 1;
-                        while (j < len && !is_separator(input, j, len))
+                        while (j < len && !is_separator(input, j))
                                 j++;
                         ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, j - i)));
                         i = j - 1;
