@@ -11,20 +11,14 @@ int is_separator(char *str, size_t i, size_t len)
 {
         for (size_t j = 0; j < 8; ++j) {
                 if (str[i] == *s[j]) {
-                        if ((str[i] == '<' && i < len - 1 && str[i + 1] == '<')
-                        || (str[i] == '>' && i < len - 1 && str[i + 1] == '>'))
-                                return 2;
-                        else if (str[i] != ' ')
-                                return 1;
-                        else if (str[i] == '\"' || str[i] == '\'')
-                                return 0;
+                        return 1;
                 }
                         
         }
-        return -1;
+        return 0;
 }
 
-char *lexer(t_list **lst, char* input)
+int lexer(t_list **lst, char* input)
 {
         size_t len = ft_strlen(input);
         size_t j;
@@ -57,7 +51,7 @@ char *lexer(t_list **lst, char* input)
                         break;
                 default:
                         j = i + 1;
-                        while (j < len && is_separator(input, j, len) == -1)
+                        while (j < len && !is_separator(input, j, len))
                                 j++;
                         ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, j - i)));
                         i = j - 1;
