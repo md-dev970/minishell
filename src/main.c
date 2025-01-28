@@ -21,6 +21,7 @@ int lexer(t_list **lst, char* input)
         size_t len = ft_strlen(input);
         size_t j;
         char open_quote = '\0';
+        t_list *here_doc = NULL;
         for(size_t i = 0; i < len; ++i) {
                 switch (input[i])
                 {
@@ -41,11 +42,13 @@ int lexer(t_list **lst, char* input)
                         break;
                 case '\'':
                 case '\"':
-                        if (!open_quote)
-                                open_quote = input[i];
-                        else if (open_quote == input[i])
-                                open_quote = '\0';
-                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 1)));
+                        j = i + 1;
+                        while (j < len && input[j] != input[i])
+                                j++;
+                        if (j == len)
+                                return -1;
+                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i + 1, j - i - 1)));
+                        i = j;
                         break;
                 default:
                         j = i + 1;
@@ -56,7 +59,7 @@ int lexer(t_list **lst, char* input)
                         break;
                 }
         }
-        return (open_quote) ? 1 : 0;
+        return 0;
 }
 
 void print_lexems(void *lexems)
