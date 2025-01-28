@@ -26,8 +26,8 @@ void expander(const char *s)
 {
         char q = '\0';
         size_t len = ft_strlen(s);
-        t_list *tmp = NULL;
-        char *str;
+        t_list *lst = NULL;
+        char *tmp;
         /* Lord forgive me for what I'm about to write */
         for (size_t i = 0; i < len; ++i) {
                 if ((s[i] == '\'' || s[i] == '\"') && !q) {
@@ -41,17 +41,19 @@ void expander(const char *s)
                         }
                         if (j < len)
                                 q = '\0';
-                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j;
                 } else if (q == '\"') {
                         while (j < len && s[j] != q) {
                                 if (s[j] == '$') {
-                                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                                         i = j;
                                         size_t k = j + 1;
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
-                                        ft_lstadd_back(&tmp, ft_lstnew(getenv(ft_substr(s, j + 1, k - j - 1))));
+                                        tmp = ft_substr(s, j + 1, k - j - 1);
+                                        ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        free(tmp);
                                         j = k + 1;
                                         i = j;
                                 }
@@ -59,28 +61,30 @@ void expander(const char *s)
                         }
                         if (j < len)
                                 q = '\0';
-                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j;
                 } else {
                         while (j < len && s[j] != '\'' && s[j] != '\"') {
                                 if (s[j] == '$') {
-                                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                                         i = j;
                                         size_t k = j + 1;
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
-                                        ft_lstadd_back(&tmp, ft_lstnew(getenv(ft_substr(s, j + 1, k - j - 1))));
+                                        tmp = ft_substr(s, j + 1, k - j - 1);
+                                        ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        free(tmp);
                                         j = k + 1;
                                         i = j;
                                 }
                                 j++;
                         }
-                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j - 1;
                 }
         }
-        ft_lstiter(tmp, &print_lexem);
-        ft_lstclear(tmp, &free);
+        ft_lstiter(lst, &print_lexem);
+        ft_lstclear(lst, &free);
 }
 
 int lexer(t_list **lst, char* input)
@@ -89,6 +93,7 @@ int lexer(t_list **lst, char* input)
         size_t j;
         char open_quote = '\0';
         t_list *here_doc = NULL;
+        char *tmp;
         for(size_t i = 0; i < len; ++i) {
                 switch (input[i])
                 {
@@ -120,8 +125,9 @@ int lexer(t_list **lst, char* input)
                                 }
                                 j++;
                         }
-                        expander(ft_substr(input, i, j - i));
-                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, j - i)));
+                        tmp = ft_substr(input, i, j - i);
+                        expander(tmp);
+                        ft_lstadd_back(lst, ft_lstnew(tmp));
                         i = j - 1;
                         break;
                 }
