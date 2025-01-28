@@ -7,6 +7,12 @@
 char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
 char *s[8] = {" ", ">", "<", "<<", ">>", "|"};
 
+void print_lexems(void *lexems)
+{
+        char *s = (char *)lexems;
+        printf("%s\n", s);
+}
+
 int is_separator(char *str, size_t i)
 {
         for (size_t j = 0; j < 6; ++j) {
@@ -14,6 +20,73 @@ int is_separator(char *str, size_t i)
                         return 1;     
         }
         return 0;
+}
+
+void expander(const char *s)
+{
+        char q = '\0';
+        size_t len = ft_strlen(s);
+        t_list *tmp = NULL;
+
+        /* Lord forgive for what I'm about to write */
+        for (size_t i = 0; i < len; ++i) {
+                if ((s[i] == '\'' || s[i] == '\"') && !q) {
+                        q = s[i];
+                        continue;
+                }
+                size_t j = i;
+                printf("j %zu\n", j);
+                if (q == '\'') {
+                        while (j < len && s[j] != q) {
+                                j++;
+                        }
+                        printf("j %zu\n", j);
+                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                        i = j - 1;
+                }
+                else if (q == '\"') {
+                        while (j < len && s[j] != q) {
+                                printf("j %zu\n", j);
+                                if (s[j] == '$') {
+                                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                                        i = j - 1;
+                                        size_t k = j + 1;
+                                        while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
+                                                k++;
+                                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, j, k - j)));
+                                        j = k - 1;
+                                        i = j - 1;
+                                }
+                                j++;
+                        }
+                        if (j < len)
+                                q = '\0';
+                        i = j - 1;
+                } else {
+                        while (j < len && s[j] != '\'' && s[j] != '\"') {
+                                printf("j %zu\n", j);
+                                if (s[j] == '$') {
+                                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                                        i = j - 1;
+                                        size_t k = j + 1;
+                                        while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
+                                                k++;
+                                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, j, k - j)));
+                                        j = k - 1;
+                                        i = j - 1;
+                                }
+                                j++;
+                        }
+                        if (j < len)
+                                q = '\0';
+                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
+                        i = j - 1;
+                }
+                
+        }
+        ft_lstiter(tmp, &print_lexems);
+        ft_lstclear(tmp, &free);
+
 }
 
 int lexer(t_list **lst, char* input)
@@ -43,7 +116,7 @@ int lexer(t_list **lst, char* input)
                         break;
 
                 default:
-                        j = i + 1;
+                        j = i;
                         while (j < len && (!is_separator(input, j) || (open_quote))) {
                                 if (input[j] == '\"' || input[j] == '\'') {
                                         if (!open_quote)
@@ -53,18 +126,13 @@ int lexer(t_list **lst, char* input)
                                 }
                                 j++;
                         }
+                        expander(ft_substr(input, i, j - i));
                         ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, j - i)));
                         i = j - 1;
                         break;
                 }
         }
         return (open_quote) ? -1 : 0;
-}
-
-void print_lexems(void *lexems)
-{
-        char *s = (char *)lexems;
-        printf("%s\n", s);
 }
 
 void parser(char **lexems)
