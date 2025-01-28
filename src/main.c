@@ -52,13 +52,14 @@ void expander(const char *s)
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, j, k - j)));
-                                        j = k - 1;
+                                        j = k + 1;
                                         i = j;
                                 }
                                 j++;
                         }
                         if (j < len)
                                 q = '\0';
+                        ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j;
                 } else {
                         while (j < len && s[j] != '\'' && s[j] != '\"') {
@@ -69,7 +70,7 @@ void expander(const char *s)
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, j, k - j)));
-                                        j = k;
+                                        j = k + 1;
                                         i = j;
                                 }
                                 j++;
