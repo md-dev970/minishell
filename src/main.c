@@ -27,7 +27,7 @@ void expander(const char *s)
         char q = '\0';
         size_t len = ft_strlen(s);
         t_list *tmp = NULL;
-
+        char *str;
         /* Lord forgive for what I'm about to write */
         for (size_t i = 0; i < len; ++i) {
                 if ((s[i] == '\'' || s[i] == '\"') && !q) {
@@ -35,54 +35,48 @@ void expander(const char *s)
                         continue;
                 }
                 size_t j = i;
-                printf("j %zu\n", j);
                 if (q == '\'') {
                         while (j < len && s[j] != q) {
                                 j++;
                         }
-                        printf("j %zu\n", j);
+                        if (j < len)
+                                q = '\0';
                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
-                        i = j - 1;
-                }
-                else if (q == '\"') {
+                        i = j;
+                } else if (q == '\"') {
                         while (j < len && s[j] != q) {
-                                printf("j %zu\n", j);
                                 if (s[j] == '$') {
                                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
-                                        i = j - 1;
+                                        i = j;
                                         size_t k = j + 1;
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, j, k - j)));
                                         j = k - 1;
-                                        i = j - 1;
+                                        i = j;
                                 }
                                 j++;
                         }
                         if (j < len)
                                 q = '\0';
-                        i = j - 1;
+                        i = j;
                 } else {
                         while (j < len && s[j] != '\'' && s[j] != '\"') {
-                                printf("j %zu\n", j);
                                 if (s[j] == '$') {
                                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
-                                        i = j - 1;
+                                        i = j;
                                         size_t k = j + 1;
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, j, k - j)));
-                                        j = k - 1;
-                                        i = j - 1;
+                                        j = k;
+                                        i = j;
                                 }
                                 j++;
                         }
-                        if (j < len)
-                                q = '\0';
                         ft_lstadd_back(&tmp, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j - 1;
                 }
-                
         }
         ft_lstiter(tmp, &print_lexems);
         ft_lstclear(tmp, &free);
