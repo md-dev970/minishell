@@ -1,0 +1,15 @@
+enum token_type {
+        CMD,
+        PIPE,
+        GT,
+        LT,
+        DGT,
+        DLT,
+        ARG,
+//        OPT
+};
+
+struct token {
+        enum token_type t;
+        char *value;
+};
