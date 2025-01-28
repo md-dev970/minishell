@@ -84,6 +84,26 @@ void expander(const char *s)
                 }
         }
         ft_lstiter(lst, &print_lexem);
+        printf("list size: %i\n", ft_lstsize(lst));
+        t_list *tmp_lst = lst;
+        size_t n = 0;
+        while (tmp_lst) {
+                n += ft_strlen((char *)tmp_lst->content);
+                tmp_lst = tmp_lst->next;
+        }
+        char *ret = (char *)malloc((n + 1) * sizeof(char));
+        if (ret == NULL) {
+                ft_lstclear(lst, &free);
+                return;
+        }
+        ret[0] = '\0';
+        tmp_lst = lst;
+        while (tmp_lst) {
+                ft_strlcat(ret, (char *)tmp_lst->content, n + 1);
+                tmp_lst = tmp_lst->next;
+        }
+        printf("result: %s\n", ret);
+        free(ret);
         ft_lstclear(lst, &free);
 }
 
