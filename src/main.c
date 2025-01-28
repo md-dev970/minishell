@@ -82,11 +82,8 @@ int main()
                 inputBuffer = readline("minishell>");
 
                 int r = lexer(&lexems, inputBuffer);
-                while (r) {
-                        free(inputBuffer);
-                        inputBuffer = readline(">");
-                        r = lexer(&lexems, inputBuffer);
-                };
+                if (r)
+                        printf("Error : unclosed quotes\n");
 
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
