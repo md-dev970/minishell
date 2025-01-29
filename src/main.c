@@ -90,10 +90,10 @@ void *generate_token(void *value)
                         t->type = PIPE;
                         break;
                 default:
-                        printf("token : %s\n", s);
                         t->type = IDENT;
                         break;
                 }
+                break;
         default:
                 t->type = IDENT;
                 break;
