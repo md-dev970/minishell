@@ -31,6 +31,29 @@ void free_token(void *token)
 void print_token(void *token)
 {
         struct token *t = (struct token *)token;
+        switch (t->type)
+        {
+        case PIPE:
+                printf("token type: PIPE\n");
+                break;
+        case GT:
+                printf("token type: GT\n");
+                break;
+        case DGT:
+                printf("token type: DGT\n");
+                break;
+        case LT:
+                printf("token type: LT\n");
+                break;
+        case DLT:
+                printf("token type: DLT\n");
+                break;
+        case IDENT:
+                printf("token type: IDENT\n");
+                break;
+        default:
+                break;
+        }
         printf("token value: %s\n", t->value);
 }
 
@@ -67,6 +90,7 @@ void *generate_token(void *value)
                         t->type = PIPE;
                         break;
                 default:
+                        printf("token : %s\n", s);
                         t->type = IDENT;
                         break;
                 }
@@ -277,6 +301,7 @@ int main()
 
 int I(t_list *l)
 {
+        printf("currently in I\n");
         if (!l)
                 return 1;
         return S(l);
@@ -284,6 +309,7 @@ int I(t_list *l)
 
 int S(t_list *l)
 {
+        printf("currently in S\n");
         if (!l)
                 return 0;
         struct token *t = (struct token *)l->content;
@@ -294,6 +320,7 @@ int S(t_list *l)
 
 int W(t_list *l)
 {
+        printf("currently in W\n");
         if (!l)
                 return 1;
         struct token *t = (struct token *)l->content;
@@ -304,6 +331,7 @@ int W(t_list *l)
 
 int R(t_list *l)
 {
+        printf("currently in R\n");
         if (!l)
                 return 0;
         struct token *t = (struct token *)l->content;
@@ -317,6 +345,7 @@ int R(t_list *l)
 
 int F(t_list *l)
 {
+        printf("currently in F\n");
         if (!l)
                 return 0;
         struct token *t = (struct token *)l->content;
