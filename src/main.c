@@ -22,8 +22,11 @@ int is_separator(char *str, size_t i)
         return 0;
 }
 
-void expander(const char *s)
+void expander(char **str)
 {
+        if (!str || !*str)
+                return;
+        char *s = *str;
         char q = '\0';
         size_t len = ft_strlen(s);
         t_list *lst = NULL;
@@ -103,7 +106,8 @@ void expander(const char *s)
                 tmp_lst = tmp_lst->next;
         }
         printf("result: %s\n", ret);
-        free(ret);
+        free(s);
+        *str = ret;
         ft_lstclear(lst, &free);
 }
 
@@ -146,7 +150,7 @@ int lexer(t_list **lst, char* input)
                                 j++;
                         }
                         tmp = ft_substr(input, i, j - i);
-                        expander(tmp);
+                        expander(&tmp);
                         ft_lstadd_back(lst, ft_lstnew(tmp));
                         i = j - 1;
                         break;
@@ -168,7 +172,6 @@ int main()
         t_list *lexems = NULL;
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
-
                 int r = lexer(&lexems, inputBuffer);
                 if (r)
                         printf("Error : unclosed quotes\n");

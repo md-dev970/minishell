@@ -6,7 +6,7 @@ enum token_type {
         DGT,
         DLT,
         ARG,
-//        OPT
+        OPT
 };
 
 struct token {
