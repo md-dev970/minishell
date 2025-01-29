@@ -229,27 +229,11 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-int W(t_list *l)
-{
-        if (!l)
-                return 1;
-        struct token *t = (struct token *)l->content;
-        if (t->type == IDENT)
-                return W(l->next);
-        else
-                return 0;
-}
+int W(t_list *l);
 
-int S(t_list *l)
-{
-        if (!l)
-                return 1;
-        struct token *t = (struct token *)l->content;
-        if (t->type == IDENT)
-                return W(l->next);
-        else
-                return 0;
-}
+int S(t_list *l);
+
+int R(t_list *l);
 
 int parser(t_list *lexems)
 {
@@ -268,8 +252,6 @@ int main()
                 int r = lexer(&lexems, inputBuffer);
                 if (r)
                         printf("Error : unclosed quotes\n");
-                else
-                        printf("accepted\n");
                 parser(lexems);
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
@@ -281,4 +263,24 @@ int main()
         rl_clear_history();
 
         return 0;
+}
+
+int W(t_list *l)
+{
+        if (!l)
+                return 1;
+        struct token *t = (struct token *)l->content;
+        if (t->type == IDENT)
+                return W(l->next);
+        return R(l);
+}
+
+int S(t_list *l)
+{
+        if (!l)
+                return 1;
+        struct token *t = (struct token *)l->content;
+        if (t->type != IDENT)
+                return 0;
+        return W(l->next);
 }
