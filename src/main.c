@@ -21,6 +21,13 @@ struct token {
         char *value;
 };
 
+void free_token(void *token)
+{
+        struct token *t = (struct token *)token;
+        free(t->value);
+        free(t);
+}
+
 void print_token(void *token)
 {
         struct token *t = (struct token *)token;
@@ -224,8 +231,8 @@ int lexer(t_list **lst, char* input)
                 }
         }
         t_list *tmp_lst = *lst;
-        *lst = ft_lstmap(*lst, &generate_token, &free);
-        free(tmp_lst);
+        *lst = ft_lstmap(*lst, &generate_token, &free_token);
+        ft_lstclear(tmp_lst, &free);
         return (open_quote) ? -1 : 0;
 }
 
@@ -242,7 +249,6 @@ int F(t_list *l);
 int parser(t_list *lexems)
 {
         /* TODO : parse the token list */
-        
         return I(lexems);
 }
 
@@ -256,12 +262,12 @@ int main()
                 int r = lexer(&lexems, inputBuffer);
                 if (r)
                         printf("Error : unclosed quotes\n");
-                parser(lexems);
+                printf("parsing result : %i\n", parser(lexems));
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
                 ft_lstiter(lexems, &print_token);
-                ft_lstclear(lexems, &free);
+                ft_lstclear(lexems, &free_token);
                 lexems = NULL;
         }
         rl_clear_history();
