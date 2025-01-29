@@ -337,8 +337,6 @@ int R(t_list *l)
         struct token *t = (struct token *)l->content;
         if (t->type == PIPE)
                 return S(l->next);
-        if (t->type != IDENT)
-                return 0;
         return F(l->next);
 
 }
