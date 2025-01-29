@@ -7,10 +7,63 @@
 char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
 char *s[8] = {" ", ">", "<", "<<", ">>", "|"};
 
+enum token_type {
+        CMD,
+        PIPE,
+        GT,
+        LT,
+        DGT,
+        DLT,
+        ARG,
+        OPT
+};
+
+struct token {
+        enum token_type type;
+        char *value;
+};
+
 void print_lexem(void *lexem)
 {
         char *s = (char *)lexem;
         printf("%s\n", s ? s : "");
+}
+
+void *generate_token(void *value)
+{
+        char *s = (char *)value;
+        struct token *t = (struct token *)malloc(sizeof(struct token));
+        switch (ft_strlen(s))
+        {
+        case 2:
+                if (ft_strncmp(s, "<<", 2) == 0)
+                        t->type = DLT;
+                else if (ft_strncmp(s, ">>", 2) == 0)
+                        t->type = DGT;
+                else
+                        t->type = ARG;
+                break;
+        case 1:
+                switch (*s)
+                {
+                case '<':
+                        t->type = LT;
+                        break;
+                case '>':
+                        t->type = GT;
+                        break;
+                case '|':
+                        t->type = PIPE;
+                        break;
+                default:
+                        t->type = ARG;
+                        break;
+                }
+        default:
+                t->type = ARG;
+                break;
+        }
+        t->value = s;
 }
 
 int is_separator(char *str, size_t i)
