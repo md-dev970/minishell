@@ -8,14 +8,12 @@ char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
 char *s[8] = {" ", ">", "<", "<<", ">>", "|"};
 
 enum token_type {
-        CMD,
         PIPE,
         GT,
         LT,
         DGT,
         DLT,
-        ARG,
-        OPT
+        IDENT,
 };
 
 struct token {
@@ -41,7 +39,7 @@ void *generate_token(void *value)
                 else if (ft_strncmp(s, ">>", 2) == 0)
                         t->type = DGT;
                 else
-                        t->type = ARG;
+                        t->type = IDENT;
                 break;
         case 1:
                 switch (*s)
@@ -56,14 +54,14 @@ void *generate_token(void *value)
                         t->type = PIPE;
                         break;
                 default:
-                        t->type = ARG;
+                        t->type = IDENT;
                         break;
                 }
         default:
-                t->type = ARG;
+                t->type = IDENT;
                 break;
         }
-        t->value = s;
+        t->value = ft_strdup(s);
 }
 
 int is_separator(char *str, size_t i)
@@ -80,6 +78,7 @@ void expander(char **str)
         if (!str || !*str)
                 return;
         char *s = *str;
+        printf("string to expand : %s[end]\n", s);
         char q = '\0';
         size_t len = ft_strlen(s);
         t_list *lst = NULL;
@@ -97,45 +96,52 @@ void expander(char **str)
                         }
                         if (j < len)
                                 q = '\0';
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                        if (j > i)
+                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j;
                 } else if (q == '\"') {
                         while (j < len && s[j] != q) {
                                 if (s[j] == '$') {
-                                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                                        if (j > i)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                                         i = j;
                                         size_t k = j + 1;
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         tmp = ft_substr(s, j + 1, k - j - 1);
-                                        ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        if (k - j > 1)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
                                         free(tmp);
-                                        j = k + 1;
-                                        i = j;
+                                        j = k - 1;
+                                        i = j + 1;
                                 }
                                 j++;
                         }
                         if (j < len)
                                 q = '\0';
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                        if (j > i)
+                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j;
                 } else {
                         while (j < len && s[j] != '\'' && s[j] != '\"') {
                                 if (s[j] == '$') {
-                                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                                        if (j > i)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                                         i = j;
                                         size_t k = j + 1;
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         tmp = ft_substr(s, j + 1, k - j - 1);
-                                        ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        if (k - j > 1)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
                                         free(tmp);
                                         j = k + 1;
                                         i = j;
                                 }
                                 j++;
                         }
-                        ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                        if (j > i)
+                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
                         i = j - 1;
                 }
         }
@@ -204,7 +210,8 @@ int lexer(t_list **lst, char* input)
                         }
                         tmp = ft_substr(input, i, j - i);
                         expander(&tmp);
-                        ft_lstadd_back(lst, ft_lstnew(tmp));
+                        if (ft_strlen(tmp))
+                                ft_lstadd_back(lst, ft_lstnew(tmp));
                         i = j - 1;
                         break;
                 }
