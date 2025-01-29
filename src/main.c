@@ -21,6 +21,12 @@ struct token {
         char *value;
 };
 
+void print_token(void *token)
+{
+        struct token *t = (struct token *)token;
+        printf("token value: %s\n", t->value);
+}
+
 void print_lexem(void *lexem)
 {
         char *s = (char *)lexem;
@@ -62,6 +68,7 @@ void *generate_token(void *value)
                 break;
         }
         t->value = ft_strdup(s);
+        return t;
 }
 
 int is_separator(char *str, size_t i)
@@ -216,13 +223,39 @@ int lexer(t_list **lst, char* input)
                         break;
                 }
         }
+        t_list *tmp_lst = *lst;
+        *lst = ft_lstmap(*lst, &generate_token, &free);
+        free(tmp_lst);
         return (open_quote) ? -1 : 0;
 }
 
-void parser(char **lexems)
+int W(t_list *l)
+{
+        if (!l)
+                return 1;
+        struct token *t = (struct token *)l->content;
+        if (t->type == IDENT)
+                return W(l->next);
+        else
+                return 0;
+}
+
+int S(t_list *l)
+{
+        if (!l)
+                return 1;
+        struct token *t = (struct token *)l->content;
+        if (t->type == IDENT)
+                return W(l->next);
+        else
+                return 0;
+}
+
+int parser(t_list *lexems)
 {
         /* TODO : parse the token list */
-        return;
+        
+        return S(lexems);
 }
 
 int main()
@@ -235,11 +268,13 @@ int main()
                 int r = lexer(&lexems, inputBuffer);
                 if (r)
                         printf("Error : unclosed quotes\n");
-
+                else
+                        printf("accepted\n");
+                parser(lexems);
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
-                ft_lstiter(lexems, &print_lexem);
+                ft_lstiter(lexems, &print_token);
                 ft_lstclear(lexems, &free);
                 lexems = NULL;
         }
