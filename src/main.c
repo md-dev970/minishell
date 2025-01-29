@@ -229,17 +229,21 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-int W(t_list *l);
+int I(t_list *l);
 
 int S(t_list *l);
 
+int W(t_list *l);
+
 int R(t_list *l);
+
+int F(t_list *l);
 
 int parser(t_list *lexems)
 {
         /* TODO : parse the token list */
         
-        return S(lexems);
+        return I(lexems);
 }
 
 int main()
@@ -265,6 +269,23 @@ int main()
         return 0;
 }
 
+int I(t_list *l)
+{
+        if (!l)
+                return 1;
+        return S(l);
+}
+
+int S(t_list *l)
+{
+        if (!l)
+                return 0;
+        struct token *t = (struct token *)l->content;
+        if (t->type != IDENT)
+                return 0;
+        return W(l->next);
+}
+
 int W(t_list *l)
 {
         if (!l)
@@ -275,10 +296,23 @@ int W(t_list *l)
         return R(l);
 }
 
-int S(t_list *l)
+int R(t_list *l)
 {
         if (!l)
-                return 1;
+                return 0;
+        struct token *t = (struct token *)l->content;
+        if (t->type == PIPE)
+                return S(l->next);
+        if (t->type != IDENT)
+                return 0;
+        return F(l->next);
+
+}
+
+int F(t_list *l)
+{
+        if (!l)
+                return 0;
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
                 return 0;
