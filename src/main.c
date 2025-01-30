@@ -226,6 +226,13 @@ int lexer(t_list **lst, char* input)
                         break;
 
                 case '<':
+                        if (i == len - 1 || input[i + 1] != input[i]) {
+                                ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 1)));
+                                break;
+                        }
+                        ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 2)));
+                        i++;
+                        break;
                 case '>':
                         if (i == len - 1 || input[i + 1] != input[i]) {
                                 ft_lstadd_back(lst, ft_lstnew(ft_substr(input, i, 1)));
@@ -260,20 +267,20 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-int I(t_list *l);
+int I(t_list *l, t_list *heredoc);
 
-int S(t_list *l);
+int S(t_list *l, t_list *heredoc);
 
-int W(t_list *l);
+int W(t_list *l, t_list *heredoc);
 
-int R(t_list *l);
+int R(t_list *l, t_list *heredoc);
 
-int F(t_list *l);
+int F(t_list *l, t_list *heredoc);
 
-int parser(t_list *lexems)
+int parser(t_list *lexems, t_list *heredoc)
 {
         /* TODO : parse the token list */
-        return I(lexems);
+        return I(lexems, heredoc);
 }
 
 int main()
@@ -281,12 +288,13 @@ int main()
         int quit = 0;
         char *inputBuffer;
         t_list *lexems = NULL;
+        t_list *heredoc = NULL;
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
                 int r = lexer(&lexems, inputBuffer);
                 if (r)
                         printf("Error : unclosed quotes\n");
-                printf("parsing result : %i\n", parser(lexems));
+                printf("parsing result : %i\n", parser(lexems, heredoc));
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
@@ -299,15 +307,15 @@ int main()
         return 0;
 }
 
-int I(t_list *l)
+int I(t_list *l, t_list *heredoc)
 {
         printf("currently in I\n");
         if (!l)
                 return 1;
-        return S(l);
+        return S(l, heredoc);
 }
 
-int S(t_list *l)
+int S(t_list *l, t_list *heredoc)
 {
         printf("currently in S\n");
         if (!l)
@@ -315,33 +323,35 @@ int S(t_list *l)
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
                 return 0;
-        return W(l->next);
+        return W(l->next, heredoc);
 }
 
-int W(t_list *l)
+int W(t_list *l, t_list *heredoc)
 {
         printf("currently in W\n");
         if (!l)
                 return 1;
         struct token *t = (struct token *)l->content;
         if (t->type == IDENT)
-                return W(l->next);
-        return R(l);
+                return W(l->next, heredoc);
+        return R(l, heredoc);
 }
 
-int R(t_list *l)
+int R(t_list *l, t_list *heredoc)
 {
         printf("currently in R\n");
         if (!l)
                 return 0;
         struct token *t = (struct token *)l->content;
         if (t->type == PIPE)
-                return S(l->next);
-        return F(l->next);
+                return S(l->next, heredoc);
+        if (t->type == DLT)
+                return H(l->next, heredoc);
+        return F(l->next, heredoc);
 
 }
 
-int F(t_list *l)
+int F(t_list *l, t_list *heredoc)
 {
         printf("currently in F\n");
         if (!l)
@@ -349,5 +359,16 @@ int F(t_list *l)
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
                 return 0;
-        return W(l->next);
+        return W(l->next, heredoc);
+}
+
+int H(t_list *l, t_list *heredoc)
+{
+        if (!l)
+                return 0;
+        struct token *t = (struct token *)l->content;
+        if (t->type != IDENT)
+                return 0;
+        ft_lstadd_back(&heredoc, ft_lstnew(ft_strdup(t->value)));
+        return W(l->next, heredoc);
 }

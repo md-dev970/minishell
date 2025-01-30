@@ -13,3 +13,12 @@ struct token {
         enum token_type t;
         char *value;
 };
+
+(e : end)
+
+I -> S | e
+S -> IDENT.W
+W -> IDENT.W | R | e
+R -> (LT | GT | DGT).F | PIPE.S | DLT.H
+F -> IDENT.W
+H -> IDENT.W (and add IDENT to heredoc t_list)
