@@ -293,21 +293,27 @@ int main()
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
                 int r = lexer(&lexems, inputBuffer);
-                if (r)
+                if (r) {
                         printf("Error : unclosed quotes\n");
-                printf("parsing result : %i\n", parser(lexems, &heredoc));
+                        goto clean;
+                }
+                r = parser(lexems, &heredoc);
+                printf("parsing result : %i\n", r);
+                if (r != 1) {
+                        goto clean;
+                }
                 t_list *doc = NULL;
                 t_list *tmp_lex = lexems;
                 t_list *tmp_hd = heredoc;
-                while(heredoc) {
+                while(tmp_hd) {
                         free(inputBuffer);
                         
                         inputBuffer = readline(">");
-                        printf("delimiter %s[end]\n", (char *)heredoc->content);
+                        printf("delimiter %s[end]\n", (char *)tmp_hd->content);
                         printf("buffer %s[end]\n", inputBuffer);
-                        printf("diff %i\n", strncmp(inputBuffer, (char *)heredoc->content, ft_strlen(inputBuffer)));
-                        if (ft_strlen(inputBuffer) != ft_strlen((char *)heredoc->content) 
-                        || strncmp(inputBuffer, (char *)heredoc->content, ft_strlen(inputBuffer)) != 0) {
+                        printf("diff %i\n", strncmp(inputBuffer, (char *)tmp_hd->content, ft_strlen(inputBuffer)));
+                        if (ft_strlen(inputBuffer) != ft_strlen((char *)tmp_hd->content) 
+                        || strncmp(inputBuffer, (char *)tmp_hd->content, ft_strlen(inputBuffer)) != 0) {
                                 ft_lstadd_back(&doc, ft_lstnew(ft_strdup(inputBuffer)));
                                 continue;
                         }
@@ -319,6 +325,12 @@ int main()
                                 n += ft_strlen((char *)tmp_lst->content);
                                 tmp_lst = tmp_lst->next;
                         }
+                        printf("heredoc lines : %i\n", ft_lstsize(doc));
+                        if (n + ft_lstsize(doc) == 0) {
+                                tmp_hd = tmp_hd->next;
+                                continue;
+                        }
+
                         char *ret = (char *)malloc((n + ft_lstsize(doc)) * sizeof(char));
                         if (ret == NULL) {
                                 ft_lstclear(doc, &free);
@@ -341,13 +353,15 @@ int main()
                                         char *tmp = ((struct token *)tmp_lex->next->content)->value;
                                         ((struct token *)tmp_lex->next->content)->value = ret;
                                         free(tmp);
+                                        break;
                                 }
-                                        
                                 tmp_lex = tmp_lex->next;
                         }
-                        heredoc = heredoc->next;
+                        tmp_hd = tmp_hd->next;
                 }
-                ft_lstclear(tmp_hd, &free);
+                clean:
+                ft_lstclear(heredoc, &free);
+                heredoc = NULL;
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
