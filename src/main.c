@@ -267,19 +267,20 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-int I(t_list *l, t_list *heredoc);
+int I(t_list *l, t_list **heredoc);
 
-int S(t_list *l, t_list *heredoc);
+int S(t_list *l, t_list **heredoc);
 
-int W(t_list *l, t_list *heredoc);
+int W(t_list *l, t_list **heredoc);
 
-int R(t_list *l, t_list *heredoc);
+int R(t_list *l, t_list **heredoc);
 
-int F(t_list *l, t_list *heredoc);
+int F(t_list *l, t_list **heredoc);
 
-int parser(t_list *lexems, t_list *heredoc)
+int H(t_list *l, t_list **heredoc);
+
+int parser(t_list *lexems, t_list **heredoc)
 {
-        /* TODO : parse the token list */
         return I(lexems, heredoc);
 }
 
@@ -294,7 +295,59 @@ int main()
                 int r = lexer(&lexems, inputBuffer);
                 if (r)
                         printf("Error : unclosed quotes\n");
-                printf("parsing result : %i\n", parser(lexems, heredoc));
+                printf("parsing result : %i\n", parser(lexems, &heredoc));
+                t_list *doc = NULL;
+                t_list *tmp_lex = lexems;
+                t_list *tmp_hd = heredoc;
+                while(heredoc) {
+                        free(inputBuffer);
+                        
+                        inputBuffer = readline(">");
+                        printf("delimiter %s[end]\n", (char *)heredoc->content);
+                        printf("buffer %s[end]\n", inputBuffer);
+                        printf("diff %i\n", strncmp(inputBuffer, (char *)heredoc->content, ft_strlen(inputBuffer)));
+                        if (ft_strlen(inputBuffer) != ft_strlen((char *)heredoc->content) 
+                        || strncmp(inputBuffer, (char *)heredoc->content, ft_strlen(inputBuffer)) != 0) {
+                                ft_lstadd_back(&doc, ft_lstnew(ft_strdup(inputBuffer)));
+                                continue;
+                        }
+                                
+                        printf("reached this point\n");
+                        size_t n = 0;
+                        t_list *tmp_lst = doc;
+                        while (tmp_lst) {
+                                n += ft_strlen((char *)tmp_lst->content);
+                                tmp_lst = tmp_lst->next;
+                        }
+                        char *ret = (char *)malloc((n + ft_lstsize(doc)) * sizeof(char));
+                        if (ret == NULL) {
+                                ft_lstclear(doc, &free);
+                                printf("malloc failed : in heredoc treatment\n");
+                                return -1;
+                        }
+                        ret[0] = '\0';
+                        tmp_lst = doc;
+                        while (tmp_lst) {
+                                ft_strlcat(ret, (char *)tmp_lst->content, n + ft_lstsize(doc));
+                                if (tmp_lst->next)
+                                        ft_strlcat(ret, "\n", n + ft_lstsize(doc));
+                                tmp_lst = tmp_lst->next;
+                        }
+                        ft_lstclear(doc, &free);
+                        doc = NULL;
+                        tmp_lex = lexems;
+                        while(tmp_lex) {
+                                if (((struct token *)tmp_lex->content)->type == DLT) {
+                                        char *tmp = ((struct token *)tmp_lex->next->content)->value;
+                                        ((struct token *)tmp_lex->next->content)->value = ret;
+                                        free(tmp);
+                                }
+                                        
+                                tmp_lex = tmp_lex->next;
+                        }
+                        heredoc = heredoc->next;
+                }
+                ft_lstclear(tmp_hd, &free);
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
@@ -307,7 +360,7 @@ int main()
         return 0;
 }
 
-int I(t_list *l, t_list *heredoc)
+int I(t_list *l, t_list **heredoc)
 {
         printf("currently in I\n");
         if (!l)
@@ -315,7 +368,7 @@ int I(t_list *l, t_list *heredoc)
         return S(l, heredoc);
 }
 
-int S(t_list *l, t_list *heredoc)
+int S(t_list *l, t_list **heredoc)
 {
         printf("currently in S\n");
         if (!l)
@@ -326,7 +379,7 @@ int S(t_list *l, t_list *heredoc)
         return W(l->next, heredoc);
 }
 
-int W(t_list *l, t_list *heredoc)
+int W(t_list *l, t_list **heredoc)
 {
         printf("currently in W\n");
         if (!l)
@@ -337,7 +390,7 @@ int W(t_list *l, t_list *heredoc)
         return R(l, heredoc);
 }
 
-int R(t_list *l, t_list *heredoc)
+int R(t_list *l, t_list **heredoc)
 {
         printf("currently in R\n");
         if (!l)
@@ -351,7 +404,7 @@ int R(t_list *l, t_list *heredoc)
 
 }
 
-int F(t_list *l, t_list *heredoc)
+int F(t_list *l, t_list **heredoc)
 {
         printf("currently in F\n");
         if (!l)
@@ -362,13 +415,13 @@ int F(t_list *l, t_list *heredoc)
         return W(l->next, heredoc);
 }
 
-int H(t_list *l, t_list *heredoc)
+int H(t_list *l, t_list **heredoc)
 {
         if (!l)
                 return 0;
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
                 return 0;
-        ft_lstadd_back(&heredoc, ft_lstnew(ft_strdup(t->value)));
+        ft_lstadd_back(heredoc, ft_lstnew(ft_strdup(t->value)));
         return W(l->next, heredoc);
 }

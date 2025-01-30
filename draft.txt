@@ -22,3 +22,7 @@ W -> IDENT.W | R | e
 R -> (LT | GT | DGT).F | PIPE.S | DLT.H
 F -> IDENT.W
 H -> IDENT.W (and add IDENT to heredoc t_list)
+
+mem leaks :
+        unfreed mem fixed
+        invalid write when heredoc is empty
