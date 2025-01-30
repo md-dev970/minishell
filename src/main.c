@@ -202,7 +202,7 @@ void expander(char **str)
                 ft_strlcat(ret, (char *)tmp_lst->content, n + 1);
                 tmp_lst = tmp_lst->next;
         }
-        printf("result: %s\n", ret);
+        printf("result: %s[end]\n", ret);
         free(s);
         *str = ret;
         ft_lstclear(lst, &free);
@@ -257,6 +257,8 @@ int lexer(t_list **lst, char* input)
                         expander(&tmp);
                         if (ft_strlen(tmp))
                                 ft_lstadd_back(lst, ft_lstnew(tmp));
+                        else
+                                free(tmp);
                         i = j - 1;
                         break;
                 }
