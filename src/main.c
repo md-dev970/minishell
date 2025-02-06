@@ -361,13 +361,13 @@ int main()
                         }
                         tmp_hd = tmp_hd->next;
                 }
-                clean:
-                ft_lstclear(heredoc, &free);
-                heredoc = NULL;
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
+                clean:
                 free(inputBuffer);
                 ft_lstiter(lexems, &print_token);
+                ft_lstclear(heredoc, &free);
+                heredoc = NULL;
                 ft_lstclear(lexems, &free_token);
                 lexems = NULL;
         }
