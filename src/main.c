@@ -413,9 +413,9 @@ int main()
                         }
                         tmp_hd = tmp_hd->next;
                 }
+                clean:
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
-                clean:
                 free(inputBuffer);
                 ft_lstiter(lexems, &print_token);
                 ft_lstclear(heredoc, &free);
