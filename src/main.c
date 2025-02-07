@@ -30,6 +30,40 @@ typedef struct node {
         struct node *right;
 } node;
 
+void print_tree(node *root)
+{
+        if (!root)
+                return;
+        
+        switch (root->type)
+        {
+        case PIPE:
+                printf(" | ");
+                break;
+        case DLT:
+                printf(" << ");
+                break;
+        case DGT:
+                printf(" >> ");
+                break;
+        case LT:
+                printf(" < ");
+                break;
+        case GT:
+                printf(" > ");
+                break;
+        case NONE:
+                printf("  ");
+                break;
+        default:
+                printf(" %s ", root->value);
+        }
+
+        print_tree(root->left);
+        print_tree(root->center);
+        print_tree(root->right);
+}
+
 void free_tree(node *root)
 {
         if (!root)
@@ -319,6 +353,7 @@ int main()
                         goto clean;
                 }
                 node *ast = parser(lexems, &heredoc);
+                print_tree(ast);
                 free_tree(ast);
                 goto clean;
                 t_list *doc = NULL;
