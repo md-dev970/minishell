@@ -30,6 +30,16 @@ typedef struct node {
         struct node *right;
 } node;
 
+void free_tree(node *root)
+{
+        if (!root)
+                return;
+        free_tree(root->left);
+        free_tree(root->center);
+        free_tree(root->right);
+        free(root);
+}
+
 void free_token(void *token)
 {
         struct token *t = (struct token *)token;
@@ -309,6 +319,7 @@ int main()
                         goto clean;
                 }
                 node *ast = parser(lexems, &heredoc);
+                free_tree(ast);
                 goto clean;
                 t_list *doc = NULL;
                 t_list *tmp_lex = lexems;
