@@ -14,12 +14,21 @@ enum token_type {
         DGT,
         DLT,
         IDENT,
+        NONE
 };
 
 struct token {
         enum token_type type;
         char *value;
 };
+
+typedef struct node {
+        enum token_type type;
+        char *value;
+        struct node *left;
+        struct node *center;
+        struct node *right;
+} node;
 
 void free_token(void *token)
 {
@@ -269,19 +278,19 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-int I(t_list *l, t_list **heredoc);
+node *I(t_list *l, t_list **heredoc);
 
-int S(t_list *l, t_list **heredoc);
+node *S(t_list *l, t_list **heredoc);
 
-int W(t_list *l, t_list **heredoc);
+node *W(t_list *l, t_list **heredoc);
 
-int R(t_list *l, t_list **heredoc);
+node *R(t_list *l, t_list **heredoc);
 
-int F(t_list *l, t_list **heredoc);
+node *F(t_list *l, t_list **heredoc);
 
-int H(t_list *l, t_list **heredoc);
+node *H(t_list *l, t_list **heredoc);
 
-int parser(t_list *lexems, t_list **heredoc)
+node *parser(t_list *lexems, t_list **heredoc)
 {
         return I(lexems, heredoc);
 }
@@ -299,11 +308,8 @@ int main()
                         printf("Error : unclosed quotes\n");
                         goto clean;
                 }
-                r = parser(lexems, &heredoc);
-                printf("parsing result : %i\n", r);
-                if (r != 1) {
-                        goto clean;
-                }
+                node *ast = parser(lexems, &heredoc);
+                goto clean;
                 t_list *doc = NULL;
                 t_list *tmp_lex = lexems;
                 t_list *tmp_hd = heredoc;
@@ -376,68 +382,127 @@ int main()
         return 0;
 }
 
-int I(t_list *l, t_list **heredoc)
+node *I(t_list *l, t_list **heredoc)
 {
         printf("currently in I\n");
         if (!l)
-                return 1;
+                return NULL;
         return S(l, heredoc);
 }
 
-int S(t_list *l, t_list **heredoc)
+node *S(t_list *l, t_list **heredoc)
 {
         printf("currently in S\n");
         if (!l)
-                return 0;
+                return NULL;
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
-                return 0;
-        return W(l->next, heredoc);
+                return NULL;
+        node *root = (node *)malloc(sizeof(node));
+        root->type = NONE;
+        root->center = NULL;
+        root->left = (node *)malloc(sizeof(node));
+        root->left->type = IDENT;
+        root->left->value = t->value;
+        root->left->left = NULL;
+        root->left->right = NULL;
+        root->left->center = NULL;
+        root->right = W(l->next, heredoc);
+        return root;
 }
 
-int W(t_list *l, t_list **heredoc)
+node *W(t_list *l, t_list **heredoc)
 {
         printf("currently in W\n");
         if (!l)
-                return 1;
+                return NULL;
         struct token *t = (struct token *)l->content;
-        if (t->type == IDENT)
-                return W(l->next, heredoc);
+        
+        if (t->type == IDENT) {
+                node *root = (node *)malloc(sizeof(node));
+                root->type = NONE;
+                root->center = NULL;
+                root->left = (node *)malloc(sizeof(node));
+                root->left->type = IDENT;
+                root->left->value = t->value;
+                root->left->left = NULL;
+                root->left->right = NULL;
+                root->left->center = NULL;
+                root->right = W(l->next, heredoc);
+                return root;
+        }
+        
         return R(l, heredoc);
 }
 
-int R(t_list *l, t_list **heredoc)
+node *R(t_list *l, t_list **heredoc)
 {
         printf("currently in R\n");
         if (!l)
-                return 0;
+                return NULL;
         struct token *t = (struct token *)l->content;
-        if (t->type == PIPE)
-                return S(l->next, heredoc);
-        if (t->type == DLT)
-                return H(l->next, heredoc);
-        return F(l->next, heredoc);
+        node *root = (node *)malloc(sizeof(node));
+        root->type = NONE;
+        root->center = NULL;
+        root->left = (node *)malloc(sizeof(node));
+        root->left->type = t->type;
+        root->left->left = NULL;
+        root->left->right = NULL;
+        root->left->center = NULL;
 
+        switch (t->type) {
+        case PIPE:
+                root->right = S(l->next, heredoc);
+                break;
+        case DLT:
+                root->right = H(l->next, heredoc);
+                break;
+        default:
+                root->right = F(l->next, heredoc);
+        }
+
+        return root;
 }
 
-int F(t_list *l, t_list **heredoc)
+node *F(t_list *l, t_list **heredoc)
 {
         printf("currently in F\n");
         if (!l)
-                return 0;
+                return NULL;
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
-                return 0;
-        return W(l->next, heredoc);
+                return NULL;
+        node *root = (node *)malloc(sizeof(node));
+        root->type = NONE;
+        root->center = NULL;
+        root->left = (node *)malloc(sizeof(node));
+        root->left->type = IDENT;
+        root->left->value = t->value;
+        root->left->left = NULL;
+        root->left->right = NULL;
+        root->left->center = NULL;
+        root->right = W(l->next, heredoc);
+        return root;
 }
 
-int H(t_list *l, t_list **heredoc)
+node *H(t_list *l, t_list **heredoc)
 {
         if (!l)
-                return 0;
+                return NULL;
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
-                return 0;
+                return NULL;
         ft_lstadd_back(heredoc, ft_lstnew(ft_strdup(t->value)));
-        return W(l->next, heredoc);
+
+        node *root = (node *)malloc(sizeof(node));
+        root->type = NONE;
+        root->center = NULL;
+        root->left = (node *)malloc(sizeof(node));
+        root->left->type = IDENT;
+        root->left->value = t->value;
+        root->left->left = NULL;
+        root->left->right = NULL;
+        root->left->center = NULL;
+        root->right = W(l->next, heredoc);
+        return root;
 }
