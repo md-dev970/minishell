@@ -322,17 +322,17 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-node *B(t_list *l);
+node *B(t_list **l);
 
-node *S(t_list *l);
+node *S(t_list **l);
 
-node *P(t_list *l);
+node *P(t_list **l);
 
-node *A(t_list *l);
+node *A(t_list **l);
 
-node *I(t_list *l);
+node *I(t_list **l);
 
-node *O(t_list *l);
+node *O(t_list **l);
 
 node *parser(t_list *lexems)
 {
@@ -344,7 +344,6 @@ int main()
         int quit = 0;
         char *inputBuffer;
         t_list *lexems = NULL;
-        t_list *heredoc = NULL;
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
                 int r = lexer(&lexems, inputBuffer);
@@ -356,70 +355,11 @@ int main()
                 print_tree(ast);
                 free_tree(ast);
                 goto clean;
-                t_list *doc = NULL;
-                t_list *tmp_lex = lexems;
-                t_list *tmp_hd = heredoc;
-                while(tmp_hd) {
-                        free(inputBuffer);
-                        
-                        inputBuffer = readline(">");
-                        printf("delimiter %s[end]\n", (char *)tmp_hd->content);
-                        printf("buffer %s[end]\n", inputBuffer);
-                        printf("diff %i\n", strncmp(inputBuffer, (char *)tmp_hd->content, ft_strlen(inputBuffer)));
-                        if (ft_strlen(inputBuffer) != ft_strlen((char *)tmp_hd->content) 
-                        || strncmp(inputBuffer, (char *)tmp_hd->content, ft_strlen(inputBuffer)) != 0) {
-                                ft_lstadd_back(&doc, ft_lstnew(ft_strdup(inputBuffer)));
-                                continue;
-                        }
-                                
-                        printf("reached this point\n");
-                        size_t n = 0;
-                        t_list *tmp_lst = doc;
-                        while (tmp_lst) {
-                                n += ft_strlen((char *)tmp_lst->content);
-                                tmp_lst = tmp_lst->next;
-                        }
-                        printf("heredoc lines : %i\n", ft_lstsize(doc));
-                        if (n + ft_lstsize(doc) == 0) {
-                                tmp_hd = tmp_hd->next;
-                                continue;
-                        }
-
-                        char *ret = (char *)malloc((n + ft_lstsize(doc)) * sizeof(char));
-                        if (ret == NULL) {
-                                ft_lstclear(doc, &free);
-                                printf("malloc failed : in heredoc treatment\n");
-                                return -1;
-                        }
-                        ret[0] = '\0';
-                        tmp_lst = doc;
-                        while (tmp_lst) {
-                                ft_strlcat(ret, (char *)tmp_lst->content, n + ft_lstsize(doc));
-                                if (tmp_lst->next)
-                                        ft_strlcat(ret, "\n", n + ft_lstsize(doc));
-                                tmp_lst = tmp_lst->next;
-                        }
-                        ft_lstclear(doc, &free);
-                        doc = NULL;
-                        tmp_lex = lexems;
-                        while(tmp_lex) {
-                                if (((struct token *)tmp_lex->content)->type == DLT) {
-                                        char *tmp = ((struct token *)tmp_lex->next->content)->value;
-                                        ((struct token *)tmp_lex->next->content)->value = ret;
-                                        free(tmp);
-                                        break;
-                                }
-                                tmp_lex = tmp_lex->next;
-                        }
-                        tmp_hd = tmp_hd->next;
-                }
                 clean:
                 if (strcmp(inputBuffer, "exit") == 0)
                         quit = 1;
                 free(inputBuffer);
                 ft_lstiter(lexems, &print_token);
-                ft_lstclear(heredoc, &free);
-                heredoc = NULL;
                 ft_lstclear(lexems, &free_token);
                 lexems = NULL;
         }
@@ -428,7 +368,7 @@ int main()
         return 0;
 }
 
-node *B(t_list *l)
+node *B(t_list **l)
 {
         printf("currently in B\n");
         if (!l)
@@ -436,7 +376,7 @@ node *B(t_list *l)
         return S(l);
 }
 
-node *S(t_list *l)
+node *S(t_list **l)
 {
         printf("currently in S\n");
         if (!l)
@@ -457,12 +397,12 @@ node *S(t_list *l)
         return root;
 }
 
-node *P(t_list *l)
+node *P(t_list **l)
 {
         printf("currently in P\n");
         if (!l)
                 return NULL;
-        struct token *t = (struct token *)l->content;
+        struct token *t = (struct token *)->content;
         
         if (t->type == IDENT) {
                 node *root = (node *)malloc(sizeof(node));
@@ -481,7 +421,7 @@ node *P(t_list *l)
         return A(l);
 }
 
-node *A(t_list *l)
+node *A(t_list **l)
 {
         printf("currently in A\n");
         if (!l)
@@ -510,7 +450,7 @@ node *A(t_list *l)
         return root;
 }
 
-node *I(t_list *l)
+node *I(t_list **l)
 {
         printf("currently in I\n");
         if (!l)
@@ -531,7 +471,7 @@ node *I(t_list *l)
         return root;
 }
 
-node *O(t_list *l)
+node *O(t_list **l)
 {
         if (!l)
                 return NULL;
