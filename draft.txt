@@ -16,9 +16,9 @@ struct token {
 
 (e : end)
 
-I -> S | e
-S -> IDENT.W
-W -> IDENT.W | R | e
-R -> (LT | GT | DGT).F | PIPE.S | DLT.H
-F -> IDENT.W
-H -> IDENT.W (and add IDENT to heredoc t_list)
+B -> e | S
+S -> IDENT.AP
+P -> PIPE.SP | e
+A -> IA | OA | e
+I -> (IDENT | LT | DLT)A
+O -> (GT | DGT)A
