@@ -322,21 +322,21 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-node *I(t_list *l, t_list **heredoc);
+node *B(t_list *l, t_list **heredoc);
 
 node *S(t_list *l, t_list **heredoc);
 
-node *W(t_list *l, t_list **heredoc);
+node *P(t_list *l, t_list **heredoc);
 
-node *R(t_list *l, t_list **heredoc);
+node *A(t_list *l, t_list **heredoc);
 
-node *F(t_list *l, t_list **heredoc);
+node *I(t_list *l, t_list **heredoc);
 
-node *H(t_list *l, t_list **heredoc);
+node *O(t_list *l, t_list **heredoc);
 
 node *parser(t_list *lexems, t_list **heredoc)
 {
-        return I(lexems, heredoc);
+        return B(lexems, heredoc);
 }
 
 int main()
@@ -428,9 +428,9 @@ int main()
         return 0;
 }
 
-node *I(t_list *l, t_list **heredoc)
+node *B(t_list *l, t_list **heredoc)
 {
-        printf("currently in I\n");
+        printf("currently in B\n");
         if (!l)
                 return NULL;
         return S(l, heredoc);
@@ -453,13 +453,13 @@ node *S(t_list *l, t_list **heredoc)
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = W(l->next, heredoc);
+        root->right = P(l->next, heredoc);
         return root;
 }
 
-node *W(t_list *l, t_list **heredoc)
+node *P(t_list *l, t_list **heredoc)
 {
-        printf("currently in W\n");
+        printf("currently in P\n");
         if (!l)
                 return NULL;
         struct token *t = (struct token *)l->content;
@@ -474,16 +474,16 @@ node *W(t_list *l, t_list **heredoc)
                 root->left->left = NULL;
                 root->left->right = NULL;
                 root->left->center = NULL;
-                root->right = W(l->next, heredoc);
+                root->right = P(l->next, heredoc);
                 return root;
         }
         
-        return R(l, heredoc);
+        return A(l, heredoc);
 }
 
-node *R(t_list *l, t_list **heredoc)
+node *A(t_list *l, t_list **heredoc)
 {
-        printf("currently in R\n");
+        printf("currently in A\n");
         if (!l)
                 return NULL;
         struct token *t = (struct token *)l->content;
@@ -501,18 +501,18 @@ node *R(t_list *l, t_list **heredoc)
                 root->right = S(l->next, heredoc);
                 break;
         case DLT:
-                root->right = H(l->next, heredoc);
+                root->right = O(l->next, heredoc);
                 break;
         default:
-                root->right = F(l->next, heredoc);
+                root->right = I(l->next, heredoc);
         }
 
         return root;
 }
 
-node *F(t_list *l, t_list **heredoc)
+node *I(t_list *l, t_list **heredoc)
 {
-        printf("currently in F\n");
+        printf("currently in I\n");
         if (!l)
                 return NULL;
         struct token *t = (struct token *)l->content;
@@ -527,11 +527,11 @@ node *F(t_list *l, t_list **heredoc)
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = W(l->next, heredoc);
+        root->right = P(l->next, heredoc);
         return root;
 }
 
-node *H(t_list *l, t_list **heredoc)
+node *O(t_list *l, t_list **heredoc)
 {
         if (!l)
                 return NULL;
@@ -549,6 +549,6 @@ node *H(t_list *l, t_list **heredoc)
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = W(l->next, heredoc);
+        root->right = P(l->next, heredoc);
         return root;
 }
