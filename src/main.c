@@ -403,26 +403,27 @@ node *S(t_list **l)
 node *P(t_list **l)
 {
         printf("currently in P\n");
-        if (!l)
+        if (!(*l))
                 return NULL;
-        struct token *t = (struct token *)->content;
-        
-        if (t->type == IDENT) {
+        struct token *t = (struct token *)(*l)->content;
+
+        if (t->type == PIPE) {
                 node *root = (node *)malloc(sizeof(node));
                 root->type = NONE;
-                root->center = NULL;
                 root->left = (node *)malloc(sizeof(node));
-                root->left->type = IDENT;
-                root->left->value = t->value;
+                root->left->type = PIPE;
                 root->left->left = NULL;
                 root->left->right = NULL;
                 root->left->center = NULL;
-                root->right = P(l->next);
+                *l = (*l)->next;
+                root->center = S(l);
+                root->right = P(l);
                 return root;
         }
-        
-        return A(l);
+
+        return NULL;
 }
+
 
 node *A(t_list **l)
 {
