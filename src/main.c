@@ -322,21 +322,21 @@ int lexer(t_list **lst, char* input)
         return (open_quote) ? -1 : 0;
 }
 
-node *B(t_list *l, t_list **heredoc);
+node *B(t_list *l);
 
-node *S(t_list *l, t_list **heredoc);
+node *S(t_list *l);
 
-node *P(t_list *l, t_list **heredoc);
+node *P(t_list *l);
 
-node *A(t_list *l, t_list **heredoc);
+node *A(t_list *l);
 
-node *I(t_list *l, t_list **heredoc);
+node *I(t_list *l);
 
-node *O(t_list *l, t_list **heredoc);
+node *O(t_list *l);
 
-node *parser(t_list *lexems, t_list **heredoc)
+node *parser(t_list *lexems)
 {
-        return B(lexems, heredoc);
+        return B(lexems);
 }
 
 int main()
@@ -352,7 +352,7 @@ int main()
                         printf("Error : unclosed quotes\n");
                         goto clean;
                 }
-                node *ast = parser(lexems, &heredoc);
+                node *ast = parser(lexems);
                 print_tree(ast);
                 free_tree(ast);
                 goto clean;
@@ -428,15 +428,15 @@ int main()
         return 0;
 }
 
-node *B(t_list *l, t_list **heredoc)
+node *B(t_list *l)
 {
         printf("currently in B\n");
         if (!l)
                 return NULL;
-        return S(l, heredoc);
+        return S(l);
 }
 
-node *S(t_list *l, t_list **heredoc)
+node *S(t_list *l)
 {
         printf("currently in S\n");
         if (!l)
@@ -453,11 +453,11 @@ node *S(t_list *l, t_list **heredoc)
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = P(l->next, heredoc);
+        root->right = P(l->next);
         return root;
 }
 
-node *P(t_list *l, t_list **heredoc)
+node *P(t_list *l)
 {
         printf("currently in P\n");
         if (!l)
@@ -474,14 +474,14 @@ node *P(t_list *l, t_list **heredoc)
                 root->left->left = NULL;
                 root->left->right = NULL;
                 root->left->center = NULL;
-                root->right = P(l->next, heredoc);
+                root->right = P(l->next);
                 return root;
         }
         
-        return A(l, heredoc);
+        return A(l);
 }
 
-node *A(t_list *l, t_list **heredoc)
+node *A(t_list *l)
 {
         printf("currently in A\n");
         if (!l)
@@ -498,19 +498,19 @@ node *A(t_list *l, t_list **heredoc)
 
         switch (t->type) {
         case PIPE:
-                root->right = S(l->next, heredoc);
+                root->right = S(l->next);
                 break;
         case DLT:
-                root->right = O(l->next, heredoc);
+                root->right = O(l->next);
                 break;
         default:
-                root->right = I(l->next, heredoc);
+                root->right = I(l->next);
         }
 
         return root;
 }
 
-node *I(t_list *l, t_list **heredoc)
+node *I(t_list *l)
 {
         printf("currently in I\n");
         if (!l)
@@ -527,18 +527,17 @@ node *I(t_list *l, t_list **heredoc)
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = P(l->next, heredoc);
+        root->right = P(l->next);
         return root;
 }
 
-node *O(t_list *l, t_list **heredoc)
+node *O(t_list *l)
 {
         if (!l)
                 return NULL;
         struct token *t = (struct token *)l->content;
         if (t->type != IDENT)
                 return NULL;
-        ft_lstadd_back(heredoc, ft_lstnew(ft_strdup(t->value)));
 
         node *root = (node *)malloc(sizeof(node));
         root->type = NONE;
@@ -549,6 +548,6 @@ node *O(t_list *l, t_list **heredoc)
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = P(l->next, heredoc);
+        root->right = P(l->next);
         return root;
 }
