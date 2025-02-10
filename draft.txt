@@ -22,3 +22,58 @@ P -> PIPE.SP | e
 A -> IA | OA | e
 I -> (IDENT | LT | DLT)A
 O -> (GT | DGT)A
+
+                while(tmp_hd) {
+                        free(inputBuffer);
+                        
+                        inputBuffer = readline(">");
+                        printf("delimiter %s[end]\n", (char *)tmp_hd->content);
+                        printf("buffer %s[end]\n", inputBuffer);
+                        printf("diff %i\n", strncmp(inputBuffer, (char *)tmp_hd->content, ft_strlen(inputBuffer)));
+                        if (ft_strlen(inputBuffer) != ft_strlen((char *)tmp_hd->content) 
+                        || strncmp(inputBuffer, (char *)tmp_hd->content, ft_strlen(inputBuffer)) != 0) {
+                                ft_lstadd_back(&doc, ft_lstnew(ft_strdup(inputBuffer)));
+                                continue;
+                        }
+                                
+                        printf("reached this point\n");
+                        size_t n = 0;
+                        t_list *tmp_lst = doc;
+                        while (tmp_lst) {
+                                n += ft_strlen((char *)tmp_lst->content);
+                                tmp_lst = tmp_lst->next;
+                        }
+                        printf("heredoc lines : %i\n", ft_lstsize(doc));
+                        if (n + ft_lstsize(doc) == 0) {
+                                tmp_hd = tmp_hd->next;
+                                continue;
+                        }
+
+                        char *ret = (char *)malloc((n + ft_lstsize(doc)) * sizeof(char));
+                        if (ret == NULL) {
+                                ft_lstclear(doc, &free);
+                                printf("malloc failed : in heredoc treatment\n");
+                                return -1;
+                        }
+                        ret[0] = '\0';
+                        tmp_lst = doc;
+                        while (tmp_lst) {
+                                ft_strlcat(ret, (char *)tmp_lst->content, n + ft_lstsize(doc));
+                                if (tmp_lst->next)
+                                        ft_strlcat(ret, "\n", n + ft_lstsize(doc));
+                                tmp_lst = tmp_lst->next;
+                        }
+                        ft_lstclear(doc, &free);
+                        doc = NULL;
+                        tmp_lex = lexems;
+                        while(tmp_lex) {
+                                if (((struct token *)tmp_lex->content)->type == DLT) {
+                                        char *tmp = ((struct token *)tmp_lex->next->content)->value;
+                                        ((struct token *)tmp_lex->next->content)->value = ret;
+                                        free(tmp);
+                                        break;
+                                }
+                                tmp_lex = tmp_lex->next;
+                        }
+                        tmp_hd = tmp_hd->next;
+                }
