@@ -376,26 +376,29 @@ node *B(t_list **l)
         return S(l);
 }
 
+
 node *S(t_list **l)
 {
         printf("currently in S\n");
-        if (!l)
+        if (!(*l))
                 return NULL;
-        struct token *t = (struct token *)l->content;
+        struct token *t = (struct token *)(*l)->content;
         if (t->type != IDENT)
                 return NULL;
         node *root = (node *)malloc(sizeof(node));
         root->type = NONE;
-        root->center = NULL;
         root->left = (node *)malloc(sizeof(node));
         root->left->type = IDENT;
         root->left->value = t->value;
         root->left->left = NULL;
         root->left->right = NULL;
         root->left->center = NULL;
-        root->right = P(l->next);
+        *l = (*l)->next;
+        root->center = A(l);
+        root->right = P(l);
         return root;
 }
+
 
 node *P(t_list **l)
 {
