@@ -371,7 +371,7 @@ int main()
 node *B(t_list **l)
 {
         printf("currently in B\n");
-        if (!l)
+        if (!l || !(*l))
                 return NULL;
         return S(l);
 }
