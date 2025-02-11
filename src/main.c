@@ -428,28 +428,27 @@ node *P(t_list **l)
 node *A(t_list **l)
 {
         printf("currently in A\n");
-        if (!l)
+        if (!(*l))
                 return NULL;
-        struct token *t = (struct token *)l->content;
+        struct token *t = (struct token *)(*l)->content;
         node *root = (node *)malloc(sizeof(node));
         root->type = NONE;
-        root->center = NULL;
-        root->left = (node *)malloc(sizeof(node));
-        root->left->type = t->type;
-        root->left->left = NULL;
-        root->left->right = NULL;
-        root->left->center = NULL;
+        root->right = NULL;
 
         switch (t->type) {
-        case PIPE:
-                root->right = S(l->next);
+        case DGT:
+        case GT:
+                root->left = O(l);
                 break;
+        case LT:
         case DLT:
-                root->right = O(l->next);
+        case IDENT:
+                root->left = I(l);
                 break;
         default:
-                root->right = I(l->next);
+                return NULL;
         }
+        root->center = A(l);
 
         return root;
 }
