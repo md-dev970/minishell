@@ -361,6 +361,10 @@ node *parser(t_list *lexems)
         return B(&lexems);
 }
 
+void execute(node *ast);
+
+void execute_pipe(node *ast, char *output);
+
 int main()
 {
         int quit = 0;
@@ -375,6 +379,8 @@ int main()
                 }
                 node *ast = parser(lexems);
                 print_tree(ast);
+                printf("\n");
+                execute(ast);
                 free_tree(ast);
                 goto clean;
                 clean:
@@ -547,4 +553,28 @@ node *F(t_list **l)
         root->center = NULL;
         *l = (*l)->next;
         return root;
+}
+
+void execute(node *ast)
+{
+        if (!ast)
+                return;
+        
+        printf("executing command %s \n", ast->left->value);
+        if (ast->right != NULL) {
+                printf("pipline\n");
+                execute_pipe(ast->right->center, ast->left->value);
+        }
+}
+
+void execute_pipe(node *ast, char *output)
+{
+        if (!ast)
+                return;
+        printf("executing command %s with input from %s\n", ast->left->value, output);
+        if (ast->right != NULL) {
+                printf("pipline\n");
+                execute_pipe(ast->right->center, ast->left->value);
+        }
+
 }
