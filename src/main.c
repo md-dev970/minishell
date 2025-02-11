@@ -380,8 +380,10 @@ node *B(t_list **l)
 node *S(t_list **l)
 {
         printf("currently in S\n");
-        if (!(*l))
+        if (!(*l)) {
+                printf("Error\n");
                 return NULL;
+        }
         struct token *t = (struct token *)(*l)->content;
         if (t->type != IDENT)
                 return NULL;
@@ -420,7 +422,7 @@ node *P(t_list **l)
                 root->right = P(l);
                 return root;
         }
-
+        printf("Error\n");
         return NULL;
 }
 
