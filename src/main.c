@@ -444,8 +444,16 @@ node *A(t_list **l)
                 break;
         case LT:
         case DLT:
-        case IDENT:
                 root->left = I(l);
+                break;
+        case IDENT:
+                (*l) = (*l)->next;
+                root->left = (node *)malloc(sizeof(node));
+                root->left->type = IDENT;
+                root->left->value = t->value;
+                root->left->left = NULL;
+                root->left->right = NULL;
+                root->left->center = NULL;
                 break;
         default:
                 free(root);
@@ -456,6 +464,7 @@ node *A(t_list **l)
         return root;
 }
 
+
 node *I(t_list **l)
 {
         printf("currently in I\n");
@@ -463,30 +472,35 @@ node *I(t_list **l)
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
         node *root = (node *)malloc(sizeof(node));
-        root->type = t->type;
-        if (t->type == IDENT)
-                root->value = t->value;
-        root->left = NULL;
+        root->type = NONE;
+        root->left = (node *)malloc(sizeof(node));
+        root->left->type = t->type;
+        root->left->left = NULL;
+        root->left->right = NULL;
+        root->left->center = NULL;
         root->right = NULL;
-        root->center = NULL;
         *l = (*l)->next;
+        root->center = F(l);
         return root;
 }
 
+
 node *O(t_list **l)
 {
-        printf("Currently in O\n");
+        printf("currently in O\n");
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
-
         node *root = (node *)malloc(sizeof(node));
-        root->type = t->type;
-        root->left = NULL;
-        root->center = NULL;
+        root->type = NONE;
+        root->left = (node *)malloc(sizeof(node));
+        root->left->type = t->type;
+        root->left->left = NULL;
+        root->left->right = NULL;
+        root->left->center = NULL;
         root->right = NULL;
         *l = (*l)->next;
-
+        root->center = F(l);
         return root;
 }
 
