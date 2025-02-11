@@ -19,9 +19,10 @@ struct token {
 B -> e | S
 S -> IDENT.AP
 P -> PIPE.SP | e
-A -> IA | OA | e
-I -> (IDENT | LT | DLT)
-O -> (GT | DGT)
+A -> (IDENT | I | O) A | e
+I -> (LT | DLT)F
+O -> (GT | DGT)F
+F -> IDENT
 
                 while(tmp_hd) {
                         free(inputBuffer);
