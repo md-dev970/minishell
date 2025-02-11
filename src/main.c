@@ -527,8 +527,13 @@ node *O(t_list **l)
 
 node *F(t_list **l)
 {
+        if (!(*l)) {
+                printf("Error\n");
+                return NULL;
+        }
+
         struct token *t = (struct token *)(*l)->content;
-        if (!(*l) || t->type != IDENT) {
+        if (t->type != IDENT) {
                 printf("Error\n");
                 return NULL;
         }
