@@ -582,6 +582,33 @@ void execute_pipe(node *ast, char *output)
 
 }
 
+char *heredoc(char *delimiter)
+{
+        char *input = "";
+        size_t len = 0;
+        t_list *lines = NULL;
+        while (
+        ft_strlen(input) != ft_strlen(delimiter) ||
+         ft_strncmp(input, delimiter, ft_strlen(input)) != 0) {
+                
+                input = readline(">");
+                len += ft_strlen(input) + 1;
+                ft_lstadd_back(&lines, ft_lstnew(input));
+        }
+        input = (char *)malloc((len - ft_strlen(delimiter) + 1) * sizeof(char));
+        if (!input)
+                return NULL;
+        t_list *tmp = lines;
+        while (tmp && tmp->next) {
+                ft_strlcat(input, (char *)tmp->content, len + 1);
+                ft_strlcat(input, "\n", len + 1);
+                tmp = tmp->next;
+        }
+        ft_lstclear(lines, &free);
+                
+        return input;
+}
+
 void add_input(node *ast, t_list **input)
 {
         if (!ast) {
