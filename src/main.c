@@ -30,38 +30,57 @@ typedef struct node {
         struct node *right;
 } node;
 
+t_list *ft_lstpop_front(t_list **l)
+{
+        if (!l || !(*l))
+                return NULL;
+        t_list *tmp = (*l);
+        *l = (*l)->next;
+        return tmp;
+}
+
 void print_tree(node *root)
 {
         if (!root)
                 return;
-        
-        switch (root->type)
-        {
-        case PIPE:
-                printf(" | ");
-                break;
-        case DLT:
-                printf(" << ");
-                break;
-        case DGT:
-                printf(" >> ");
-                break;
-        case LT:
-                printf(" < ");
-                break;
-        case GT:
-                printf(" > ");
-                break;
-        case NONE:
-                printf("  ");
-                break;
-        default:
-                printf(" %s ", root->value);
+        t_list *queue = NULL;
+        ft_lstadd_back(&queue, ft_lstnew(root));
+        t_list *cur;
+        node *n;
+        while(queue) {
+                cur = ft_lstpop_front(&queue);
+                n = (node *)cur->content;
+                if (!n) {
+                        free(cur);
+                        continue;
+                }
+                switch (n->type)
+                {
+                case PIPE:
+                        printf(" | ");
+                        break;
+                case DLT:
+                        printf(" << ");
+                        break;
+                case DGT:
+                        printf(" >> ");
+                        break;
+                case LT:
+                        printf(" < ");
+                        break;
+                case GT:
+                        printf(" > ");
+                        break;
+                case NONE:
+                        printf("  ");
+                        break;
+                default:
+                        printf(" %s ", n->value);
+                }
+                ft_lstadd_back(&queue, ft_lstnew(n->left));
+                ft_lstadd_back(&queue, ft_lstnew(n->right));
+                ft_lstadd_back(&queue, ft_lstnew(n->center));
         }
-
-        print_tree(root->left);
-        print_tree(root->center);
-        print_tree(root->right);
 }
 
 void free_tree(node *root)
