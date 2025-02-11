@@ -456,21 +456,17 @@ node *A(t_list **l)
 node *I(t_list **l)
 {
         printf("currently in I\n");
-        if (!l)
+        if (!(*l))
                 return NULL;
-        struct token *t = (struct token *)l->content;
-        if (t->type != IDENT)
-                return NULL;
+        struct token *t = (struct token *)(*l)->content;
         node *root = (node *)malloc(sizeof(node));
-        root->type = NONE;
+        root->type = t->type;
+        if (t->type == IDENT)
+                root->value = t->value;
+        root->left = NULL;
+        root->right = NULL;
         root->center = NULL;
-        root->left = (node *)malloc(sizeof(node));
-        root->left->type = IDENT;
-        root->left->value = t->value;
-        root->left->left = NULL;
-        root->left->right = NULL;
-        root->left->center = NULL;
-        root->right = P(l->next);
+        *l = (*l)->next;
         return root;
 }
 
