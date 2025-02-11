@@ -546,7 +546,7 @@ node *F(t_list **l)
                 printf("Error\n");
                 return NULL;
         }
-
+        printf("currently in F\n");
         node *root = (node *)malloc(sizeof(node));
         root->type = IDENT;
         root->value = t->value;
@@ -584,11 +584,18 @@ void execute_pipe(node *ast, char *output)
 
 void add_input(node *ast, t_list **input)
 {
-        if (!ast)
+        if (!ast) {
+                printf("null\n");
                 return;
-        if (ast->left->type == IDENT) {
-                ft_lstadd_back(input, ft_lstnew(ft_strdup(ast->left->value)));
         }
+        if (ast->type == IDENT)
+                ft_lstadd_back(input, ft_lstnew(ft_strdup(ast->value)));
+        if (ast->type == NONE && ast->left->type == DLT) {
+                printf("delimiter is: %s\n", ast->center->value);
+                char *text = heredoc(ast->center->value);
+                ft_lstadd_back(input, ft_lstnew(text));
+        }
+        add_input(ast->left, input);
         add_input(ast->center, input);
 }
 
@@ -598,10 +605,7 @@ char **expand_input(node *ast)
                 return NULL;
         
         t_list *input = NULL;
-        if (ast->left->type == IDENT) {
-                ft_lstadd_back(&input, ft_lstnew(ft_strdup(ast->left->value)));
-        }
-        add_input(ast->center, &input);
+        add_input(ast, &input);
         printf("----------------------\n Inputs: \n");
         ft_lstiter(input, &print_lexem);
         ft_lstclear(input, &free);
