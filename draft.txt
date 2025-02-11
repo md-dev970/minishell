@@ -20,8 +20,8 @@ B -> e | S
 S -> IDENT.AP
 P -> PIPE.SP | e
 A -> IA | OA | e
-I -> (IDENT | LT | DLT)A
-O -> (GT | DGT)A
+I -> (IDENT | LT | DLT)
+O -> (GT | DGT)
 
                 while(tmp_hd) {
                         free(inputBuffer);
