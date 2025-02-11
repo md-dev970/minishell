@@ -365,6 +365,8 @@ void execute(node *ast);
 
 void execute_pipe(node *ast, char *output);
 
+char **expand_input(node *ast);
+
 int main()
 {
         int quit = 0;
@@ -561,6 +563,7 @@ void execute(node *ast)
                 return;
         
         printf("executing command %s \n", ast->left->value);
+        char **input = expand_input(ast->center);
         if (ast->right != NULL) {
                 printf("pipline\n");
                 execute_pipe(ast->right->center, ast->left->value);
@@ -577,4 +580,30 @@ void execute_pipe(node *ast, char *output)
                 execute_pipe(ast->right->center, ast->left->value);
         }
 
+}
+
+void add_input(node *ast, t_list **input)
+{
+        if (!ast)
+                return;
+        if (ast->left->type == IDENT) {
+                ft_lstadd_back(input, ft_lstnew(ft_strdup(ast->left->value)));
+        }
+        add_input(ast->center, input);
+}
+
+char **expand_input(node *ast)
+{
+        if (!ast)
+                return NULL;
+        
+        t_list *input = NULL;
+        if (ast->left->type == IDENT) {
+                ft_lstadd_back(&input, ft_lstnew(ft_strdup(ast->left->value)));
+        }
+        add_input(ast->center, &input);
+        printf("----------------------\n Inputs: \n");
+        ft_lstiter(input, &print_lexem);
+        ft_lstclear(input, &free);
+        return NULL;
 }
