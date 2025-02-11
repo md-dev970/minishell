@@ -595,7 +595,8 @@ char *heredoc(char *delimiter)
                 len += ft_strlen(input) + 1;
                 ft_lstadd_back(&lines, ft_lstnew(input));
         }
-        input = (char *)malloc((len - ft_strlen(delimiter) + 1) * sizeof(char));
+        len -= ft_strlen(delimiter) + 1;
+        input = (char *)malloc((len + 1) * sizeof(char));
         if (!input)
                 return NULL;
         t_list *tmp = lines;
