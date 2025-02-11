@@ -336,7 +336,7 @@ node *O(t_list **l);
 
 node *parser(t_list *lexems)
 {
-        return B(lexems);
+        return B(&lexems);
 }
 
 int main()
