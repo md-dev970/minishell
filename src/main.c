@@ -334,6 +334,8 @@ node *I(t_list **l);
 
 node *O(t_list **l);
 
+node *F(t_list **l);
+
 node *parser(t_list *lexems)
 {
         return B(&lexems);
