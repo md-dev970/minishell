@@ -575,6 +575,7 @@ void execute_pipe(node *ast, char *output)
         if (!ast)
                 return;
         printf("executing command %s with input from %s\n", ast->left->value, output);
+        char **input = expand_input(ast->center);
         if (ast->right != NULL) {
                 printf("pipline\n");
                 execute_pipe(ast->right->center, ast->left->value);
