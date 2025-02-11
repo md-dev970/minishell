@@ -446,6 +446,7 @@ node *A(t_list **l)
                 root->left = I(l);
                 break;
         default:
+                free(root);
                 return NULL;
         }
         root->center = A(l);
