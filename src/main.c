@@ -489,3 +489,21 @@ node *O(t_list **l)
 
         return root;
 }
+
+node *F(t_list **l)
+{
+        struct token *t = (struct token *)(*l)->content;
+        if (!(*l) || t->type != IDENT) {
+                printf("Error\n");
+                return NULL;
+        }
+
+        node *root = (node *)malloc(sizeof(node));
+        root->type = IDENT;
+        root->value = t->value;
+        root->left = NULL;
+        root->right = NULL;
+        root->center = NULL;
+        *l = (*l)->next;
+        return root;
+}
