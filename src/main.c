@@ -78,8 +78,9 @@ void print_tree(node *root)
                         printf(" %s ", n->value);
                 }
                 ft_lstadd_back(&queue, ft_lstnew(n->left));
-                ft_lstadd_back(&queue, ft_lstnew(n->right));
                 ft_lstadd_back(&queue, ft_lstnew(n->center));
+                ft_lstadd_back(&queue, ft_lstnew(n->right));
+                free(cur);
         }
 }
 
