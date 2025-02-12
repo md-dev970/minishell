@@ -3,6 +3,7 @@
 #include <string.h>
 #include <readline/readline.h>
 #include "../libft/include/libft.h"
+#include <sys/types.h>
 
 char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
 char *s[8] = {" ", ">", "<", "<<", ">>", "|"};
@@ -564,8 +565,12 @@ void execute(node *ast)
         
         printf("executing command %s \n", ast->left->value);
         char **input = expand_input(ast->center);
+        char path[20] = "/bin/";
+        ft_strlcat(path, ast->left->value, 20);
+        int status = execve(path, input, NULL);
+        
+        printf("Execution status : %i\n", status);
         size_t i = 0;
-        printf("expanded input\n");
         while (input && input[i])
                 free(input[i++]);
 
