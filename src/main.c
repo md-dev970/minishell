@@ -567,6 +567,8 @@ void execute(node *ast)
         char **input = expand_input(ast->center);
         char path[20] = "/bin/";
         ft_strlcat(path, ast->left->value, 20);
+        input[0] = path;
+        printf("---------------------------------\nCommand output\n");
         int status = execve(path, input, NULL);
         
         printf("Execution status : %i\n", status);
@@ -655,13 +657,13 @@ char **expand_input(node *ast)
         ft_lstiter(input, &print_lexem);
         t_list *tmp = input;
         printf("Input list size: %i\n", ft_lstsize(input));
-        char **args = (char **)malloc((ft_lstsize(input) + 1) * sizeof(char *));
-        for (size_t i = 0; i < ft_lstsize(input); ++i)
+        char **args = (char **)malloc((ft_lstsize(input) + 2) * sizeof(char *));
+        for (size_t i = 1; i < ft_lstsize(input) + 1; ++i)
         {
                 args[i] = ft_strdup((char *)tmp->content);
                 tmp = tmp->next;
         }
-        args[ft_lstsize(input)] = NULL;
+        args[ft_lstsize(input) + 1] = NULL;
         ft_lstclear(input, &free);
         return args;
 }
