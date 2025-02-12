@@ -1,6 +1,7 @@
 #ifndef LIBFT_H
 #define LIBFT_H
 
+/* Some functions need these libraries */
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -48,5 +49,6 @@
 #include "ft_lstclear.h"
 #include "ft_lstiter.h"
 #include "ft_lstmap.h"
+#include "ft_lstpop_front.h"
 
 #endif /* LIBFT_H */

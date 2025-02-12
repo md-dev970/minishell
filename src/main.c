@@ -15,15 +15,6 @@ typedef struct node {
         struct node *right;
 } node;
 
-t_list *ft_lstpop_front(t_list **l)
-{
-        if (!l || !(*l))
-                return NULL;
-        t_list *tmp = (*l);
-        *l = (*l)->next;
-        return tmp;
-}
-
 void print_tree(node *root)
 {
         if (!root)
