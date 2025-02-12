@@ -564,6 +564,12 @@ void execute(node *ast)
         
         printf("executing command %s \n", ast->left->value);
         char **input = expand_input(ast->center);
+        size_t i = 0;
+        printf("expanded input\n");
+        while (input && input[i])
+                free(input[i++]);
+
+        free(input);
         if (ast->right != NULL) {
                 printf("pipline\n");
                 execute_pipe(ast->right->center, ast->left->value);
@@ -576,6 +582,11 @@ void execute_pipe(node *ast, char *output)
                 return;
         printf("executing command %s with input from %s\n", ast->left->value, output);
         char **input = expand_input(ast->center);
+        size_t i = 0;
+        while (input && input[i])
+                free(input[i++]);
+        free(input);
+                
         if (ast->right != NULL) {
                 printf("pipline\n");
                 execute_pipe(ast->right->center, ast->left->value);
@@ -637,6 +648,15 @@ char **expand_input(node *ast)
         add_input(ast, &input);
         printf("----------------------\n Inputs: \n");
         ft_lstiter(input, &print_lexem);
+        t_list *tmp = input;
+        printf("Input list size: %i\n", ft_lstsize(input));
+        char **args = (char **)malloc((ft_lstsize(input) + 1) * sizeof(char *));
+        for (size_t i = 0; i < ft_lstsize(input); ++i)
+        {
+                args[i] = ft_strdup((char *)tmp->content);
+                tmp = tmp->next;
+        }
+        args[ft_lstsize(input)] = NULL;
         ft_lstclear(input, &free);
-        return NULL;
+        return args;
 }
