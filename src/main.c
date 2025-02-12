@@ -3,17 +3,9 @@
 #include <string.h>
 #include <readline/readline.h>
 #include <sys/types.h>
-#include "token.h"
 #include "lexer.h"
+#include "parser.h"
 
-
-typedef struct node {
-        enum token_type type;
-        char *value;
-        struct node *left;
-        struct node *center;
-        struct node *right;
-} node;
 
 void print_tree(node *root)
 {
@@ -70,26 +62,6 @@ void free_tree(node *root)
         free(root);
 }
 
-
-node *B(t_list **l);
-
-node *S(t_list **l);
-
-node *P(t_list **l);
-
-node *A(t_list **l);
-
-node *I(t_list **l);
-
-node *O(t_list **l);
-
-node *F(t_list **l);
-
-node *parser(t_list *lexems)
-{
-        return B(&lexems);
-}
-
 void execute(node *ast);
 
 void execute_pipe(node *ast, char *output);
@@ -125,165 +97,6 @@ int main()
         rl_clear_history();
 
         return 0;
-}
-
-node *B(t_list **l)
-{
-        printf("currently in B\n");
-        if (!l || !(*l))
-                return NULL;
-        return S(l);
-}
-
-
-node *S(t_list **l)
-{
-        printf("currently in S\n");
-        if (!(*l)) {
-                printf("Error\n");
-                return NULL;
-        }
-        struct token *t = (struct token *)(*l)->content;
-        if (t->type != IDENT)
-                return NULL;
-        node *root = (node *)malloc(sizeof(node));
-        root->type = NONE;
-        root->left = (node *)malloc(sizeof(node));
-        root->left->type = IDENT;
-        root->left->value = t->value;
-        root->left->left = NULL;
-        root->left->right = NULL;
-        root->left->center = NULL;
-        *l = (*l)->next;
-        root->center = A(l);
-        root->right = P(l);
-        return root;
-}
-
-
-node *P(t_list **l)
-{
-        printf("currently in P\n");
-        if (!(*l))
-                return NULL;
-        struct token *t = (struct token *)(*l)->content;
-
-        if (t->type == PIPE) {
-                node *root = (node *)malloc(sizeof(node));
-                root->type = NONE;
-                root->left = (node *)malloc(sizeof(node));
-                root->left->type = PIPE;
-                root->left->left = NULL;
-                root->left->right = NULL;
-                root->left->center = NULL;
-                *l = (*l)->next;
-                root->center = S(l);
-                root->right = P(l);
-                return root;
-        }
-        printf("Error\n");
-        return NULL;
-}
-
-
-node *A(t_list **l)
-{
-        printf("currently in A\n");
-        if (!(*l))
-                return NULL;
-        struct token *t = (struct token *)(*l)->content;
-        node *root = (node *)malloc(sizeof(node));
-        root->type = NONE;
-        root->right = NULL;
-
-        switch (t->type) {
-        case DGT:
-        case GT:
-                root->left = O(l);
-                break;
-        case LT:
-        case DLT:
-                root->left = I(l);
-                break;
-        case IDENT:
-                (*l) = (*l)->next;
-                root->left = (node *)malloc(sizeof(node));
-                root->left->type = IDENT;
-                root->left->value = t->value;
-                root->left->left = NULL;
-                root->left->right = NULL;
-                root->left->center = NULL;
-                break;
-        default:
-                free(root);
-                return NULL;
-        }
-        root->center = A(l);
-
-        return root;
-}
-
-
-node *I(t_list **l)
-{
-        printf("currently in I\n");
-        if (!(*l))
-                return NULL;
-        struct token *t = (struct token *)(*l)->content;
-        node *root = (node *)malloc(sizeof(node));
-        root->type = NONE;
-        root->left = (node *)malloc(sizeof(node));
-        root->left->type = t->type;
-        root->left->left = NULL;
-        root->left->right = NULL;
-        root->left->center = NULL;
-        root->right = NULL;
-        *l = (*l)->next;
-        root->center = F(l);
-        return root;
-}
-
-
-node *O(t_list **l)
-{
-        printf("currently in O\n");
-        if (!(*l))
-                return NULL;
-        struct token *t = (struct token *)(*l)->content;
-        node *root = (node *)malloc(sizeof(node));
-        root->type = NONE;
-        root->left = (node *)malloc(sizeof(node));
-        root->left->type = t->type;
-        root->left->left = NULL;
-        root->left->right = NULL;
-        root->left->center = NULL;
-        root->right = NULL;
-        *l = (*l)->next;
-        root->center = F(l);
-        return root;
-}
-
-node *F(t_list **l)
-{
-        if (!(*l)) {
-                printf("Error\n");
-                return NULL;
-        }
-
-        struct token *t = (struct token *)(*l)->content;
-        if (t->type != IDENT) {
-                printf("Error\n");
-                return NULL;
-        }
-        printf("currently in F\n");
-        node *root = (node *)malloc(sizeof(node));
-        root->type = IDENT;
-        root->value = t->value;
-        root->left = NULL;
-        root->right = NULL;
-        root->center = NULL;
-        *l = (*l)->next;
-        return root;
 }
 
 void execute(node *ast)
@@ -336,7 +149,7 @@ char *heredoc(char *delimiter)
         t_list *lines = NULL;
         while (
         ft_strlen(input) != ft_strlen(delimiter) ||
-         ft_strncmp(input, delimiter, ft_strlen(input)) != 0) {
+        ft_strncmp(input, delimiter, ft_strlen(input)) != 0) {
                 
                 input = readline(">");
                 len += ft_strlen(input) + 1;
