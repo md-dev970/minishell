@@ -159,6 +159,7 @@ char *heredoc(char *delimiter)
         input = (char *)malloc((len + 1) * sizeof(char));
         if (!input)
                 return NULL;
+        input[0] = '\0';
         t_list *tmp = lines;
         while (tmp && tmp->next) {
                 ft_strlcat(input, (char *)tmp->content, len + 1);
