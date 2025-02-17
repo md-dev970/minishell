@@ -3,6 +3,7 @@
 #include <string.h>
 #include <readline/readline.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include "lexer.h"
 #include "parser.h"
 
@@ -106,16 +107,43 @@ void execute(node *ast)
         
         printf("executing command %s \n", ast->left->value);
         char **input = expand_input(ast->center);
-        char path[20] = "/bin/";
+        if (!input) {
+                input = (char **)malloc(2 * sizeof(char *));
+                input[1] = NULL;
+        }
+                
+        char *path = (char *)malloc(20 * sizeof(char));
+        path[0] = '\0';
+        ft_strlcat(path, "/bin/", 20);
         ft_strlcat(path, ast->left->value, 20);
         input[0] = path;
         printf("---------------------------------\nCommand output\n");
-        int status = execve(path, input, NULL);
+        // int p[2];
+        // pipe(p);
+        pid_t id = fork();
+        if (id < 0) {
+                printf("fork failed\n");
+                return;
+        }
+                
+        if (id == 0) {
+                if (execve(path, input, __environ) < 0) {
+                        printf("failed executing command\n");
+                        exit(91);
+                }
+                        
+        } else {
+                wait(NULL);
+        }
         
-        printf("Execution status : %i\n", status);
+        
         size_t i = 0;
-        while (input && input[i])
-                free(input[i++]);
+        while (input && input[i]) {
+                printf("freeing input: %s\n", input[i]);
+                free(input[i]);
+                i++;
+        }
+                
 
         free(input);
         if (ast->right != NULL) {
@@ -183,6 +211,7 @@ void add_input(node *ast, t_list **input)
                 printf("delimiter is: %s\n", ast->center->value);
                 char *text = heredoc(ast->center->value);
                 ft_lstadd_back(input, ft_lstnew(text));
+                return;
         }
         add_input(ast->left, input);
         add_input(ast->center, input);
