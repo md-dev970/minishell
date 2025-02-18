@@ -110,103 +110,72 @@ void execute(node *ast)
 {
         if (!ast)
                 return;
-        
+
         printf("executing command %s \n", ast->left->value);
         args *ar = expand_input(ast);
-        char **input = (char **)malloc((ft_lstsize(ar->clargs) + 2) * sizeof(char *));
+        char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
         t_list *tmp = ar->clargs;
-        size_t i = 1;
+        size_t i = 0;
         printf("argument list size: %i\n", ft_lstsize(ar->clargs));
         while (tmp) {
                 printf("arg: %s\n", (char *)tmp->content);
                 input[i++] = ft_strdup((char *)tmp->content);
                 tmp = tmp->next;
         }
+
         if (!input) {
-                input = (char **)malloc(2 * sizeof(char *));
+                input = (char **)malloc(sizeof(char *));
         }
         input[i] = NULL;
-        
-        ft_lstclear(ar->clargs, &free);
-        ft_lstclear(ar->hd, &free);
-        ft_lstclear(ar->inf, &free);
-        ft_lstclear(ar->ouf, &free);
 
-        free(ar);
 
         char *path = (char *)malloc(20 * sizeof(char));
         path[0] = '\0';
         ft_strlcat(path, "/bin/", 20);
         ft_strlcat(path, ast->left->value, 20);
+        free(input[0]);
         input[0] = path;
         printf("---------------------------------\nCommand output\n");
+
         pid_t id = fork();
         if (id < 0) {
                 printf("fork failed\n");
                 return;
         }
-                
+
         if (id == 0) {
-                int p1[2];
-                int p2[2];
-                pipe(p1);
-                pipe(p2);
-                if ((id = fork()) < 0) {
-                        printf("fork failed\n");
-                        return;
-                }
-                if (id == 0) {
-                        close(p1[0]);
-                        char *in = readline(">");
-                        while (ft_strlen(in) != 3 || ft_strncmp(in, "eof", 3)) {
-                                write(p1[1], in, ft_strlen(in));
-                                write(p1[1], "\n", 1);
-                                free(in);
-                                in = readline(">");
-                        }
-                        close(p1[1]);
-                        close(p2[0]);
-                        free(in);
-                        in = readline(">");
-                        while (ft_strlen(in) != 1 || ft_strncmp(in, "w", 1)) {
-                                write(p2[1], in, ft_strlen(in));
-                                write(p2[1], "\n", 1);
-                                free(in);
-                                in = readline(">");
-                        }
-                        close(p2[1]);
-                        printf("done\n");
-                        exit(0);
-                } else {
-                        close(p1[1]);
-                        close(p2[1]);
-                        wait(NULL);
+                printf("beginning execution\n");
+                tmp = ar->hd;
+                while (tmp) {
+                        printf("changing input fd\n");
                         close(STDIN_FILENO);
-                        dup2(p1[0], STDIN_FILENO);
-                        dup2(p2[0], STDIN_FILENO);
-                        close(p1[0]);
-                        close(p2[0]);
-                        printf("beginning execution\n");
-                        if (execve(path, input, __environ) < 0) {
-                                printf("failed executing command\n");
-                                exit(1);
-                        }
+                        dup2(*(int *)tmp->content, STDIN_FILENO);
+                        close(*(int *)tmp->content);
+                        tmp = tmp->next;
+                }
+                if (execve(path, input, __environ) < 0) {
+                        printf("failed executing command\n");
+                        exit(1);
                 }
         } else {
                 int status;
                 waitpid(id, &status, 0);
                 printf("command executed\nstatus: %i\n", status);
         }
-        
-        
+
+        ft_lstclear(ar->clargs, &free);
+        ft_lstclear(ar->hd, &free);
+        ft_lstclear(ar->inf, &free);
+        ft_lstclear(ar->ouf, &free);
+        free(ar);
+
+
         i = 0;
         while (input && input[i]) {
                 printf("freeing input: %s\n", input[i]);
                 free(input[i]);
                 i++;
         }
-                
-
         free(input);
         if (ast->right != NULL) {
                 printf("pipline\n");
@@ -226,7 +195,6 @@ int *heredoc(char *delimiter)
         pipe(p);
         while (ft_strlen(input) != ft_strlen(delimiter) ||
                 ft_strncmp(input, delimiter, ft_strlen(input)) != 0) {
-                
                 write(p[1], input, ft_strlen(input));
                 write(p[1], "\n", 1);
                 free(input);
@@ -247,7 +215,7 @@ void add_input(node *ast, args *input)
                 ft_lstadd_back(&(input->clargs), ft_lstnew(ft_strdup(ast->value)));
         if (ast->type == NONE && ast->left->type == DLT) {
                 printf("delimiter is: %s\n", ast->center->value);
-                ft_lstadd_back(&(input->clargs), ft_lstnew(heredoc(ast->center->value)));
+                ft_lstadd_back(&(input->hd), ft_lstnew(heredoc(ast->center->value)));
                 return;
         }
         add_input(ast->left, input);
