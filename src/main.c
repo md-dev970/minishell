@@ -125,28 +125,46 @@ void execute(node *ast)
         }
                 
         if (id == 0) {
-                int p[2];
-                pipe(p);
-                pid_t cid = fork();
-                if (cid == 0) {
-                        close(p[0]);
+                int p1[2];
+                int p2[2];
+                pipe(p1);
+                pipe(p2);
+                if ((id = fork()) < 0) {
+                        printf("fork failed\n");
+                        return;
+                }
+                if (id == 0) {
+                        close(p1[0]);
                         char *in = readline(">");
                         while (ft_strlen(in) != 3 || ft_strncmp(in, "eof", 3)) {
-                                write(p[1], in, ft_strlen(in) + 1);
+                                write(p1[1], in, ft_strlen(in));
+                                write(p1[1], "\n", 1);
                                 free(in);
                                 in = readline(">");
                         }
-                        close(p[1]);
+                        close(p1[1]);
+                        close(p2[0]);
+                        free(in);
+                        in = readline(">");
+                        while (ft_strlen(in) != 1 || ft_strncmp(in, "w", 1)) {
+                                write(p2[1], in, ft_strlen(in));
+                                write(p2[1], "\n", 1);
+                                free(in);
+                                in = readline(">");
+                        }
+                        close(p2[1]);
                         printf("done\n");
                         exit(0);
                 } else {
-                        close(p[1]);
-                        close(STDIN_FILENO);
-                        dup2(p[0], STDIN_FILENO);
-                        close(p[0]);
+                        close(p1[1]);
+                        close(p2[1]);
                         wait(NULL);
+                        close(STDIN_FILENO);
+                        dup2(p1[0], STDIN_FILENO);
+                        dup2(p2[0], STDIN_FILENO);
+                        close(p1[0]);
+                        close(p2[0]);
                         printf("beginning execution\n");
-                        // exit(0);
                         if (execve(path, input, __environ) < 0) {
                                 printf("failed executing command\n");
                                 exit(1);
