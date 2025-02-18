@@ -118,8 +118,6 @@ void execute(node *ast)
         ft_strlcat(path, ast->left->value, 20);
         input[0] = path;
         printf("---------------------------------\nCommand output\n");
-        // int p[2];
-        // pipe(p);
         pid_t id = fork();
         if (id < 0) {
                 printf("fork failed\n");
@@ -127,13 +125,37 @@ void execute(node *ast)
         }
                 
         if (id == 0) {
-                if (execve(path, input, __environ) < 0) {
-                        printf("failed executing command\n");
-                        exit(91);
+                int p[2];
+                pipe(p);
+                pid_t cid = fork();
+                if (cid == 0) {
+                        close(p[0]);
+                        char *in = readline(">");
+                        while (ft_strlen(in) != 3 || ft_strncmp(in, "eof", 3)) {
+                                write(p[1], in, ft_strlen(in) + 1);
+                                free(in);
+                                in = readline(">");
+                        }
+                        close(p[1]);
+                        printf("done\n");
+                        exit(0);
+                } else {
+                        close(p[1]);
+                        close(STDIN_FILENO);
+                        dup2(p[0], STDIN_FILENO);
+                        close(p[0]);
+                        wait(NULL);
+                        printf("beginning execution\n");
+                        // exit(0);
+                        if (execve(path, input, __environ) < 0) {
+                                printf("failed executing command\n");
+                                exit(1);
+                        }
                 }
-                        
         } else {
-                wait(NULL);
+                int status;
+                waitpid(id, &status, 0);
+                printf("command executed\nstatus: %i\n", status);
         }
         
         
