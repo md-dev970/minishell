@@ -7,11 +7,17 @@
 #include "lexer.h"
 #include "parser.h"
 
+
+typedef struct file {
+        int fd;
+        int flag;
+        mode_t mode;
+} file;
+
 typedef struct args {
         t_list *clargs;
         t_list *hd;
-        t_list *inf;
-        t_list *ouf;
+        t_list *files;
 } args;
 
 void print_tree(node *root)
@@ -153,6 +159,8 @@ void execute(node *ast)
                         close(*(int *)tmp->content);
                         tmp = tmp->next;
                 }
+
+
                 if (execve(path, input, __environ) < 0) {
                         printf("failed executing command\n");
                         exit(1);
@@ -165,8 +173,7 @@ void execute(node *ast)
 
         ft_lstclear(ar->clargs, &free);
         ft_lstclear(ar->hd, &free);
-        ft_lstclear(ar->inf, &free);
-        ft_lstclear(ar->ouf, &free);
+        ft_lstclear(ar->files, &free);
         free(ar);
 
 
@@ -213,11 +220,28 @@ void add_input(node *ast, args *input)
         }
         if (ast->type == IDENT)
                 ft_lstadd_back(&(input->clargs), ft_lstnew(ft_strdup(ast->value)));
+
         if (ast->type == NONE && ast->left->type == DLT) {
                 printf("delimiter is: %s\n", ast->center->value);
                 ft_lstadd_back(&(input->hd), ft_lstnew(heredoc(ast->center->value)));
                 return;
         }
+
+        if (ast->type == NONE && ast->left->type == LT) {
+                ft_lstadd_back(&(input->files), ft_lstnew(ast->center->value));
+                return;
+        }
+
+        if (ast->type == NONE && ast->left->type == DGT) {
+                ft_lstadd_back(&(input->files), ft_lstnew(ast->center->value));
+                return;
+        }
+
+        if (ast->type == NONE && ast->left->type == GT) {
+                ft_lstadd_back(&(input->files), ft_lstnew(ast->center->value));
+                return;
+        }
+
         add_input(ast->left, input);
         add_input(ast->center, input);
 }
@@ -230,8 +254,7 @@ args *expand_input(node *ast)
         args *a = (args *)malloc(sizeof(args));
         a->clargs = NULL;
         a->hd = NULL;
-        a->inf = NULL;
-        a->ouf = NULL;
+        a->fname = NULL;
         add_input(ast, a);
         return a;
 }
