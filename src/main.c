@@ -231,9 +231,7 @@ void execute(node *ast)
                         free(pathenv[j++]);
                 free(pathenv);
                 straight:
-                free(input[0]);
-                input[0] = fullpath;
-                if (execve(input[0], input, __environ) < 0) {
+                if (execve(fullpath, input, __environ) < 0) {
                         printf("failed executing command\n");
                         exit(4);
                 }
