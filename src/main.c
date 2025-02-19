@@ -139,13 +139,6 @@ void execute(node *ast)
         }
         input[i] = NULL;
 
-
-        // char *path = (char *)malloc(20 * sizeof(char));
-        // path[0] = '\0';
-        // ft_strlcat(path, "/bin/", 20);
-        // ft_strlcat(path, ast->left->value, 20);
-        // free(input[0]);
-        // input[0] = path;
         printf("---------------------------------\nCommand output\n");
 
         pid_t id = fork();
@@ -197,11 +190,13 @@ void execute(node *ast)
                         }
                         tmp = tmp->next;
                 }
+                char *fullpath = ast->left->value;
+                if (access(fullpath, F_OK) == 0)
+                        goto straight;
                 char **pathenv = ft_split(getenv("PATH"), ':');
                 size_t j = 0;
                 DIR *dir;
                 struct dirent *d;
-                char *fullpath = NULL;
                 while (pathenv && pathenv[j]) {
                         dir = opendir(pathenv[j]);
                         while ((d = readdir(dir)) != NULL) {
@@ -235,12 +230,14 @@ void execute(node *ast)
                 while (pathenv && pathenv[j])
                         free(pathenv[j++]);
                 free(pathenv);
+                straight:
                 free(input[0]);
                 input[0] = fullpath;
                 if (execve(input[0], input, __environ) < 0) {
                         printf("failed executing command\n");
                         exit(4);
                 }
+
         } else {
                 int status;
                 waitpid(id, &status, 0);
