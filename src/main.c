@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/fcntl.h>
+#include <dirent.h>
 #include "lexer.h"
 #include "parser.h"
 
@@ -88,6 +89,11 @@ int main()
         t_list *lexems = NULL;
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
+                if (strcmp(inputBuffer, "exit") == 0) {
+                        quit = 1;
+                        goto clean;
+                }
+                        
                 int r = lexer(&lexems, inputBuffer);
                 if (r) {
                         printf("Error : unclosed quotes\n");
@@ -100,8 +106,6 @@ int main()
                 free_tree(ast);
                 goto clean;
                 clean:
-                if (strcmp(inputBuffer, "exit") == 0)
-                        quit = 1;
                 free(inputBuffer);
                 ft_lstiter(lexems, &print_token);
                 ft_lstclear(lexems, &free_token);
@@ -117,6 +121,45 @@ void execute(node *ast)
         if (!ast)
                 return;
 
+        char **pathenv = ft_split(getenv("PATH"), ':');
+        size_t j = 0;
+        DIR *dir;
+        struct dirent *d;
+        while (pathenv && pathenv[j]) {
+                dir = opendir(pathenv[j]);
+                while ((d = readdir(dir)) != NULL) {
+                        if (ft_strlen(d->d_name) == ft_strlen(ast->left->value)
+                        && !ft_strncmp(d->d_name, ast->left->value, ft_strlen(ast->left->value))) {
+                                char *fullpath = (char *)malloc((ft_strlen(pathenv[j]) + 
+                                ft_strlen(ast->left->value) + 2) * sizeof(char));
+                                fullpath[0] = '\0';
+                                ft_strlcat(fullpath, pathenv[j], ft_strlen(pathenv[j]) + 
+                                ft_strlen(ast->left->value) + 2);
+                                ft_strlcat(fullpath, "/", ft_strlen(pathenv[j]) + 
+                                ft_strlen(ast->left->value) + 2);
+                                ft_strlcat(fullpath, ast->left->value, ft_strlen(pathenv[j]) + 
+                                ft_strlen(ast->left->value) + 2);
+                                free(ast->left->value);
+                                ast->left->value = fullpath;
+                                goto execute;
+                        }
+                                
+                }
+                closedir(dir);
+                j++;
+        }
+        j = 0;
+        while (pathenv && pathenv[j])
+                free(pathenv[j++]);
+        free(pathenv);
+        printf("minishell: command %s not found\n", ast->left->value);
+        return;
+        execute:
+        j = 0;
+        while (pathenv && pathenv[j])
+                free(pathenv[j++]);
+        free(pathenv);
+        free(pathenv);
         printf("executing command %s \n", ast->left->value);
         args *ar = expand_input(ast);
         char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
@@ -135,12 +178,12 @@ void execute(node *ast)
         input[i] = NULL;
 
 
-        char *path = (char *)malloc(20 * sizeof(char));
-        path[0] = '\0';
-        ft_strlcat(path, "/bin/", 20);
-        ft_strlcat(path, ast->left->value, 20);
-        free(input[0]);
-        input[0] = path;
+        // char *path = (char *)malloc(20 * sizeof(char));
+        // path[0] = '\0';
+        // ft_strlcat(path, "/bin/", 20);
+        // ft_strlcat(path, ast->left->value, 20);
+        // free(input[0]);
+        // input[0] = path;
         printf("---------------------------------\nCommand output\n");
 
         pid_t id = fork();
@@ -178,7 +221,7 @@ void execute(node *ast)
                                         close(STDOUT_FILENO);
                                         dup2(fd, STDOUT_FILENO);
                                 } else {
-                                        fd = open(f->path, O_WRONLY | O_CREAT | O_APPEND);
+                                        fd = open(f->path, O_WRONLY | O_CREAT | O_APPEND, 0644);
                                         if (fd < 0) {
                                                 write(out, "error opening file 2\n", 22);
                                                 exit(3);
@@ -193,8 +236,7 @@ void execute(node *ast)
                         tmp = tmp->next;
                 }
 
-
-                if (execve(path, input, __environ) < 0) {
+                if (execve(input[0], input, __environ) < 0) {
                         printf("failed executing command\n");
                         exit(4);
                 }
