@@ -125,12 +125,13 @@ void execute(node *ast)
         size_t j = 0;
         DIR *dir;
         struct dirent *d;
+        char *fullpath = NULL;
         while (pathenv && pathenv[j]) {
                 dir = opendir(pathenv[j]);
                 while ((d = readdir(dir)) != NULL) {
                         if (ft_strlen(d->d_name) == ft_strlen(ast->left->value)
                         && !ft_strncmp(d->d_name, ast->left->value, ft_strlen(ast->left->value))) {
-                                char *fullpath = (char *)malloc((ft_strlen(pathenv[j]) + 
+                                fullpath = (char *)malloc((ft_strlen(pathenv[j]) + 
                                 ft_strlen(ast->left->value) + 2) * sizeof(char));
                                 fullpath[0] = '\0';
                                 ft_strlcat(fullpath, pathenv[j], ft_strlen(pathenv[j]) + 
@@ -139,8 +140,7 @@ void execute(node *ast)
                                 ft_strlen(ast->left->value) + 2);
                                 ft_strlcat(fullpath, ast->left->value, ft_strlen(pathenv[j]) + 
                                 ft_strlen(ast->left->value) + 2);
-                                free(ast->left->value);
-                                ast->left->value = fullpath;
+                                closedir(dir);
                                 goto execute;
                         }
                                 
@@ -159,8 +159,7 @@ void execute(node *ast)
         while (pathenv && pathenv[j])
                 free(pathenv[j++]);
         free(pathenv);
-        free(pathenv);
-        printf("executing command %s \n", ast->left->value);
+        printf("executing command %s \n", fullpath);
         args *ar = expand_input(ast);
         char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
         t_list *tmp = ar->clargs;
