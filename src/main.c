@@ -121,45 +121,8 @@ void execute(node *ast)
         if (!ast)
                 return;
 
-        char **pathenv = ft_split(getenv("PATH"), ':');
-        size_t j = 0;
-        DIR *dir;
-        struct dirent *d;
-        char *fullpath = NULL;
-        while (pathenv && pathenv[j]) {
-                dir = opendir(pathenv[j]);
-                while ((d = readdir(dir)) != NULL) {
-                        if (ft_strlen(d->d_name) == ft_strlen(ast->left->value)
-                        && !ft_strncmp(d->d_name, ast->left->value, ft_strlen(ast->left->value))) {
-                                fullpath = (char *)malloc((ft_strlen(pathenv[j]) + 
-                                ft_strlen(ast->left->value) + 2) * sizeof(char));
-                                fullpath[0] = '\0';
-                                ft_strlcat(fullpath, pathenv[j], ft_strlen(pathenv[j]) + 
-                                ft_strlen(ast->left->value) + 2);
-                                ft_strlcat(fullpath, "/", ft_strlen(pathenv[j]) + 
-                                ft_strlen(ast->left->value) + 2);
-                                ft_strlcat(fullpath, ast->left->value, ft_strlen(pathenv[j]) + 
-                                ft_strlen(ast->left->value) + 2);
-                                closedir(dir);
-                                goto execute;
-                        }
-                                
-                }
-                closedir(dir);
-                j++;
-        }
-        j = 0;
-        while (pathenv && pathenv[j])
-                free(pathenv[j++]);
-        free(pathenv);
-        printf("minishell: command %s not found\n", ast->left->value);
-        return;
-        execute:
-        j = 0;
-        while (pathenv && pathenv[j])
-                free(pathenv[j++]);
-        free(pathenv);
-        printf("executing command %s \n", fullpath);
+
+        printf("executing command %s \n", ast->left->value);
         args *ar = expand_input(ast);
         char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
         t_list *tmp = ar->clargs;
@@ -234,7 +197,46 @@ void execute(node *ast)
                         }
                         tmp = tmp->next;
                 }
-
+                char **pathenv = ft_split(getenv("PATH"), ':');
+                size_t j = 0;
+                DIR *dir;
+                struct dirent *d;
+                char *fullpath = NULL;
+                while (pathenv && pathenv[j]) {
+                        dir = opendir(pathenv[j]);
+                        while ((d = readdir(dir)) != NULL) {
+                                if (ft_strlen(d->d_name) == ft_strlen(ast->left->value)
+                                && !ft_strncmp(d->d_name, ast->left->value, ft_strlen(ast->left->value))) {
+                                        fullpath = (char *)malloc((ft_strlen(pathenv[j]) + 
+                                        ft_strlen(ast->left->value) + 2) * sizeof(char));
+                                        fullpath[0] = '\0';
+                                        ft_strlcat(fullpath, pathenv[j], ft_strlen(pathenv[j]) + 
+                                        ft_strlen(ast->left->value) + 2);
+                                        ft_strlcat(fullpath, "/", ft_strlen(pathenv[j]) + 
+                                        ft_strlen(ast->left->value) + 2);
+                                        ft_strlcat(fullpath, ast->left->value, ft_strlen(pathenv[j]) + 
+                                        ft_strlen(ast->left->value) + 2);
+                                        closedir(dir);
+                                        goto execute;
+                                }
+                                        
+                        }
+                        closedir(dir);
+                        j++;
+                }
+                j = 0;
+                while (pathenv && pathenv[j])
+                        free(pathenv[j++]);
+                free(pathenv);
+                printf("minishell: command %s not found\n", ast->left->value);
+                exit(5);
+                execute:
+                j = 0;
+                while (pathenv && pathenv[j])
+                        free(pathenv[j++]);
+                free(pathenv);
+                free(input[0]);
+                input[0] = fullpath;
                 if (execve(input[0], input, __environ) < 0) {
                         printf("failed executing command\n");
                         exit(4);
