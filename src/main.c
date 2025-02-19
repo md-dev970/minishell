@@ -170,7 +170,7 @@ void execute(node *ast)
                                         close(STDIN_FILENO);
                                         dup2(fd, STDIN_FILENO);
                                 } else if (f->flag == 1) {
-                                        fd = open(f->path, O_WRONLY | O_CREAT, 0664);
+                                        fd = open(f->path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
                                         if (fd < 0) {
                                                 write(out, "error opening file 1\n", 22);
                                                 exit(2);
