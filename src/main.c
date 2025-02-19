@@ -4,19 +4,19 @@
 #include <readline/readline.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/fcntl.h>
 #include "lexer.h"
 #include "parser.h"
 
 
 typedef struct file {
-        int fd;
+        char *path;
         int flag;
         mode_t mode;
 } file;
 
 typedef struct args {
         t_list *clargs;
-        t_list *hd;
         t_list *files;
 } args;
 
@@ -151,19 +151,52 @@ void execute(node *ast)
 
         if (id == 0) {
                 printf("beginning execution\n");
-                tmp = ar->hd;
+                tmp = ar->files;
+                int out = dup(STDOUT_FILENO);
+                int fd;
                 while (tmp) {
-                        printf("changing input fd\n");
-                        close(STDIN_FILENO);
-                        dup2(*(int *)tmp->content, STDIN_FILENO);
-                        close(*(int *)tmp->content);
+                        file *f = (file *)tmp->content;
+
+                        if (f->path) {
+                                write(out, "file to open: ", 14);
+                                write(out, f->path, ft_strlen(f->path));
+                                write(out, "\n", 2);
+                                if (f->flag == 0) {
+                                        fd = open(f->path, O_RDONLY);
+                                        if (fd < 0) {
+                                                write(out, "error opening file 0\n", 22);
+                                                exit(1);
+                                        }
+                                        close(STDIN_FILENO);
+                                        dup2(fd, STDIN_FILENO);
+                                } else if (f->flag == 1) {
+                                        fd = open(f->path, O_WRONLY | O_CREAT, 0664);
+                                        if (fd < 0) {
+                                                write(out, "error opening file 1\n", 22);
+                                                exit(2);
+                                        }
+                                        close(STDOUT_FILENO);
+                                        dup2(fd, STDOUT_FILENO);
+                                } else {
+                                        fd = open(f->path, O_WRONLY | O_CREAT | O_APPEND);
+                                        if (fd < 0) {
+                                                write(out, "error opening file 2\n", 22);
+                                                exit(3);
+                                        }
+                                        close(STDOUT_FILENO);
+                                        dup2(fd, STDOUT_FILENO);
+                                }
+                        } else {
+                                close(STDIN_FILENO);
+                                dup2(f->flag, STDIN_FILENO);
+                        }
                         tmp = tmp->next;
                 }
 
 
                 if (execve(path, input, __environ) < 0) {
                         printf("failed executing command\n");
-                        exit(1);
+                        exit(4);
                 }
         } else {
                 int status;
@@ -172,7 +205,6 @@ void execute(node *ast)
         }
 
         ft_lstclear(ar->clargs, &free);
-        ft_lstclear(ar->hd, &free);
         ft_lstclear(ar->files, &free);
         free(ar);
 
@@ -195,10 +227,10 @@ void execute_pipe(node *ast, char *output)
         return;
 }
 
-int *heredoc(char *delimiter)
+int heredoc(char *delimiter)
 {
         char *input = readline(">");
-        int *p = (int *)malloc(2 * sizeof(int));
+        int p[2];
         pipe(p);
         while (ft_strlen(input) != ft_strlen(delimiter) ||
                 ft_strncmp(input, delimiter, ft_strlen(input)) != 0) {
@@ -209,7 +241,7 @@ int *heredoc(char *delimiter)
         }
         free(input);
         close(p[1]);
-        return p;
+        return p[0];
 }
 
 void add_input(node *ast, args *input)
@@ -223,22 +255,34 @@ void add_input(node *ast, args *input)
 
         if (ast->type == NONE && ast->left->type == DLT) {
                 printf("delimiter is: %s\n", ast->center->value);
-                ft_lstadd_back(&(input->hd), ft_lstnew(heredoc(ast->center->value)));
+                file *f = (file *)malloc(sizeof(file));
+                f->flag = heredoc(ast->center->value);
+                f->path = NULL;
+                ft_lstadd_back(&(input->files), ft_lstnew(f));
                 return;
         }
 
         if (ast->type == NONE && ast->left->type == LT) {
-                ft_lstadd_back(&(input->files), ft_lstnew(ast->center->value));
+                file *f = (file *)malloc(sizeof(file));
+                f->flag = 0;
+                f->path = ast->center->value;
+                ft_lstadd_back(&(input->files), ft_lstnew(f));
                 return;
         }
 
         if (ast->type == NONE && ast->left->type == DGT) {
-                ft_lstadd_back(&(input->files), ft_lstnew(ast->center->value));
+                file *f = (file *)malloc(sizeof(file));
+                f->flag = 2;
+                f->path = ast->center->value;
+                ft_lstadd_back(&(input->files), ft_lstnew(f));
                 return;
         }
 
         if (ast->type == NONE && ast->left->type == GT) {
-                ft_lstadd_back(&(input->files), ft_lstnew(ast->center->value));
+                file *f = (file *)malloc(sizeof(file));
+                f->flag = 1;
+                f->path = ast->center->value;
+                ft_lstadd_back(&(input->files), ft_lstnew(f));
                 return;
         }
 
@@ -253,8 +297,7 @@ args *expand_input(node *ast)
 
         args *a = (args *)malloc(sizeof(args));
         a->clargs = NULL;
-        a->hd = NULL;
-        a->fname = NULL;
+        a->files = NULL;
         add_input(ast, a);
         return a;
 }
