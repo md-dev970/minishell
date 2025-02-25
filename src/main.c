@@ -266,10 +266,18 @@ void execute_pipe(node *ast, int in)
                 printf("pipline\n");
                 int p[2];
                 pipe(p);
-                execute(ast, in, p[1]);
-                close(p[1]);
-                execute_pipe(ast->right->center, p[0]);
-                close(p[0]);
+                pid_t id = fork();
+                if (id > 0) {
+                        close(p[1]);
+                        execute_pipe(ast->right->center, p[0]);
+                        close(p[0]);
+                        waitpid(id, NULL, 0);
+                } else {
+                        close(p[0]);
+                        execute(ast, in, p[1]);
+                        close(p[1]);
+                        exit(0);
+                }
                 return;
         }
         execute(ast, in, 1);
