@@ -76,9 +76,9 @@ void free_tree(node *root)
         free(root);
 }
 
-void execute(node *ast);
+void execute(node *ast, int in, int out);
 
-void execute_pipe(node *ast, char *output);
+void execute_pipe(node *ast, int in);
 
 args *expand_input(node *ast);
 
@@ -102,7 +102,7 @@ int main()
                 node *ast = parser(lexems);
                 print_tree(ast);
                 printf("\n");
-                execute(ast);
+                execute_pipe(ast, 0);
                 free_tree(ast);
                 goto clean;
                 clean:
@@ -116,7 +116,7 @@ int main()
         return 0;
 }
 
-void execute(node *ast)
+void execute(node *ast, int in, int out)
 {
         if (!ast)
                 return;
@@ -150,19 +150,23 @@ void execute(node *ast)
         if (id == 0) {
                 printf("beginning execution\n");
                 tmp = ar->files;
-                int out = dup(STDOUT_FILENO);
+                int con = dup(STDOUT_FILENO);
+                dup2(in, STDIN_FILENO);
+                printf("reached this point\n");
+                dup2(out, STDOUT_FILENO);
+                write(con,"reached this point 2\n", 22);
                 int fd;
                 while (tmp) {
                         file *f = (file *)tmp->content;
 
                         if (f->path) {
-                                write(out, "file to open: ", 14);
-                                write(out, f->path, ft_strlen(f->path));
-                                write(out, "\n", 2);
+                                write(con, "file to open: ", 14);
+                                write(con, f->path, ft_strlen(f->path));
+                                write(con, "\n", 2);
                                 if (f->flag == 0) {
                                         fd = open(f->path, O_RDONLY);
                                         if (fd < 0) {
-                                                write(out, "error opening file 0\n", 22);
+                                                write(con, "error opening file 0\n", 22);
                                                 exit(1);
                                         }
                                         close(STDIN_FILENO);
@@ -170,7 +174,7 @@ void execute(node *ast)
                                 } else if (f->flag == 1) {
                                         fd = open(f->path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
                                         if (fd < 0) {
-                                                write(out, "error opening file 1\n", 22);
+                                                write(con, "error opening file 1\n", 22);
                                                 exit(2);
                                         }
                                         close(STDOUT_FILENO);
@@ -178,7 +182,7 @@ void execute(node *ast)
                                 } else {
                                         fd = open(f->path, O_WRONLY | O_CREAT | O_APPEND, 0644);
                                         if (fd < 0) {
-                                                write(out, "error opening file 2\n", 22);
+                                                write(con, "error opening file 2\n", 22);
                                                 exit(3);
                                         }
                                         close(STDOUT_FILENO);
@@ -254,15 +258,21 @@ void execute(node *ast)
                 i++;
         }
         free(input);
-        if (ast->right != NULL) {
-                printf("pipline\n");
-                execute_pipe(ast->right->center, ast->left->value);
-        }
 }
 
-void execute_pipe(node *ast, char *output)
+void execute_pipe(node *ast, int in)
 {
-        return;
+        if (ast->right != NULL) {
+                printf("pipline\n");
+                int p[2];
+                pipe(p);
+                execute(ast, in, p[1]);
+                close(p[1]);
+                execute_pipe(ast->right->center, p[0]);
+                close(p[0]);
+                return;
+        }
+        execute(ast, in, 1);
 }
 
 int heredoc(char *delimiter)
