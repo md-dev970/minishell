@@ -3,12 +3,12 @@
 
 #include "token.h"
 
-typedef struct node {
+struct node {
         enum token_type type;
         char *value;
         struct node *left;
         struct node *center;
         struct node *right;
-} node;
+};
 
 #endif /* NODE_H */

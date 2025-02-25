@@ -3,6 +3,6 @@
 
 #include "node.h"
 
-node *parser(t_list *lexems);
+struct node *parser(t_list *lexems);
 
 #endif /* PARSER_H */

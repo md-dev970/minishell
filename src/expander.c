@@ -119,7 +119,7 @@ static char *expand_env(char *str)
         return ret;
 }
 
-static void add_input(node *ast, args *input)
+static void add_input(struct node *ast, struct args *input)
 {
         if (!ast) {
                 printf("null\n");
@@ -130,34 +130,34 @@ static void add_input(node *ast, args *input)
 
         if (ast->type == NONE && ast->left->type == DLT) {
                 printf("delimiter is: %s\n", ast->center->value);
-                file *f = (file *)malloc(sizeof(file));
+                struct fileHandler *f = (struct fileHandler *)malloc(sizeof(struct fileHandler));
                 f->flag = heredoc(ast->center->value);
                 f->path = NULL;
-                ft_lstadd_back(&(input->files), ft_lstnew(f));
+                ft_lstadd_back(&(input->fileHandlers), ft_lstnew(f));
                 return;
         }
 
         if (ast->type == NONE && ast->left->type == LT) {
-                file *f = (file *)malloc(sizeof(file));
+                struct fileHandler *f = (struct fileHandler *)malloc(sizeof(struct fileHandler));
                 f->flag = 0;
                 f->path = ast->center->value;
-                ft_lstadd_back(&(input->files), ft_lstnew(f));
+                ft_lstadd_back(&(input->fileHandlers), ft_lstnew(f));
                 return;
         }
 
         if (ast->type == NONE && ast->left->type == DGT) {
-                file *f = (file *)malloc(sizeof(file));
+                struct fileHandler *f = (struct fileHandler *)malloc(sizeof(struct fileHandler));
                 f->flag = 2;
                 f->path = ast->center->value;
-                ft_lstadd_back(&(input->files), ft_lstnew(f));
+                ft_lstadd_back(&(input->fileHandlers), ft_lstnew(f));
                 return;
         }
 
         if (ast->type == NONE && ast->left->type == GT) {
-                file *f = (file *)malloc(sizeof(file));
+                struct fileHandler *f = (struct fileHandler *)malloc(sizeof(struct fileHandler));
                 f->flag = 1;
                 f->path = ast->center->value;
-                ft_lstadd_back(&(input->files), ft_lstnew(f));
+                ft_lstadd_back(&(input->fileHandlers), ft_lstnew(f));
                 return;
         }
 
@@ -165,23 +165,23 @@ static void add_input(node *ast, args *input)
         add_input(ast->center, input);
 }
 
-static args *expand_input(node *ast)
+static struct args *expand_input(struct node *ast)
 {
         if (!ast)
                 return NULL;
 
-        args *a = (args *)malloc(sizeof(args));
+        struct args *a = (struct args *)malloc(sizeof(struct args));
         a->clargs = NULL;
-        a->files = NULL;
+        a->fileHandlers = NULL;
         add_input(ast, a);
         return a;
 }
 
-void expander(node *ast, t_list **l)
+void expander(struct node *ast, t_list **l)
 {
         if (!ast)
                 return;
-        args *ar = expand_input(ast);
+        struct args *ar = expand_input(ast);
         ft_lstadd_back(l, ft_lstnew(ar));
         if (ast->right)
                 expander(ast->right->center, l);

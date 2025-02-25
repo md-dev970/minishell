@@ -1,19 +1,19 @@
 #include "parser.h"
 
-static node *B(t_list **l);
-static node *S(t_list **l);
-static node *P(t_list **l);
-static node *A(t_list **l);
-static node *I(t_list **l);
-static node *O(t_list **l);
-static node *F(t_list **l);
+static struct node *B(t_list **l);
+static struct node *S(t_list **l);
+static struct node *P(t_list **l);
+static struct node *A(t_list **l);
+static struct node *I(t_list **l);
+static struct node *O(t_list **l);
+static struct node *F(t_list **l);
 
-node *parser(t_list *lexems)
+struct node *parser(t_list *lexems)
 {
         return B(&lexems);
 }
 
-static node *B(t_list **l)
+static struct node *B(t_list **l)
 {
         printf("currently in B\n");
         if (!l || !(*l))
@@ -22,7 +22,7 @@ static node *B(t_list **l)
 }
 
 
-static node *S(t_list **l)
+static struct node *S(t_list **l)
 {
         printf("currently in S\n");
         if (!(*l)) {
@@ -32,9 +32,9 @@ static node *S(t_list **l)
         struct token *t = (struct token *)(*l)->content;
         if (t->type != IDENT)
                 return NULL;
-        node *root = (node *)malloc(sizeof(node));
+        struct node *root = (struct node *)malloc(sizeof(struct node));
         root->type = NONE;
-        root->left = (node *)malloc(sizeof(node));
+        root->left = (struct node *)malloc(sizeof(struct node));
         root->left->type = IDENT;
         root->left->value = t->value;
         root->left->left = NULL;
@@ -47,7 +47,7 @@ static node *S(t_list **l)
 }
 
 
-static node *P(t_list **l)
+static struct node *P(t_list **l)
 {
         printf("currently in P\n");
         if (!(*l))
@@ -55,9 +55,9 @@ static node *P(t_list **l)
         struct token *t = (struct token *)(*l)->content;
 
         if (t->type == PIPE) {
-                node *root = (node *)malloc(sizeof(node));
+                struct node *root = (struct node *)malloc(sizeof(struct node));
                 root->type = NONE;
-                root->left = (node *)malloc(sizeof(node));
+                root->left = (struct node *)malloc(sizeof(struct node));
                 root->left->type = PIPE;
                 root->left->left = NULL;
                 root->left->right = NULL;
@@ -72,13 +72,13 @@ static node *P(t_list **l)
 }
 
 
-static node *A(t_list **l)
+static struct node *A(t_list **l)
 {
         printf("currently in A\n");
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
-        node *root = (node *)malloc(sizeof(node));
+        struct node *root = (struct node *)malloc(sizeof(struct node));
         root->type = NONE;
         root->right = NULL;
 
@@ -93,7 +93,7 @@ static node *A(t_list **l)
                 break;
         case IDENT:
                 (*l) = (*l)->next;
-                root->left = (node *)malloc(sizeof(node));
+                root->left = (struct node *)malloc(sizeof(struct node));
                 root->left->type = IDENT;
                 root->left->value = t->value;
                 root->left->left = NULL;
@@ -110,15 +110,15 @@ static node *A(t_list **l)
 }
 
 
-static node *I(t_list **l)
+static struct node *I(t_list **l)
 {
         printf("currently in I\n");
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
-        node *root = (node *)malloc(sizeof(node));
+        struct node *root = (struct node *)malloc(sizeof(struct node));
         root->type = NONE;
-        root->left = (node *)malloc(sizeof(node));
+        root->left = (struct node *)malloc(sizeof(struct node));
         root->left->type = t->type;
         root->left->left = NULL;
         root->left->right = NULL;
@@ -130,15 +130,15 @@ static node *I(t_list **l)
 }
 
 
-static node *O(t_list **l)
+static struct node *O(t_list **l)
 {
         printf("currently in O\n");
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
-        node *root = (node *)malloc(sizeof(node));
+        struct node *root = (struct node *)malloc(sizeof(struct node));
         root->type = NONE;
-        root->left = (node *)malloc(sizeof(node));
+        root->left = (struct node *)malloc(sizeof(struct node));
         root->left->type = t->type;
         root->left->left = NULL;
         root->left->right = NULL;
@@ -150,7 +150,7 @@ static node *O(t_list **l)
 }
 
 
-static node *F(t_list **l)
+static struct node *F(t_list **l)
 {
         if (!(*l)) {
                 printf("Error\n");
@@ -163,7 +163,7 @@ static node *F(t_list **l)
                 return NULL;
         }
         printf("currently in F\n");
-        node *root = (node *)malloc(sizeof(node));
+        struct node *root = (struct node *)malloc(sizeof(struct node));
         root->type = IDENT;
         root->value = t->value;
         root->left = NULL;

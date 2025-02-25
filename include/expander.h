@@ -5,17 +5,16 @@
 #include <readline/readline.h>
 #include <sys/fcntl.h>
 
-typedef struct file {
+struct fileHandler {
         char *path;
         int flag;
-        mode_t mode;
-} file;
+};
 
-typedef struct args {
+struct args {
         t_list *clargs;
-        t_list *files;
-} args;
+        t_list *fileHandlers;
+};
 
-void expander(node *ast, t_list **l);
+void expander(struct node *ast, t_list **l);
 
 #endif /* EXPANDER_H */

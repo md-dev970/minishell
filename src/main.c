@@ -9,17 +9,17 @@
 #include "expander.h"
 
 
-void print_tree(node *root)
+void print_tree(struct node *root)
 {
         if (!root)
                 return;
         t_list *queue = NULL;
         ft_lstadd_back(&queue, ft_lstnew(root));
         t_list *cur;
-        node *n;
+        struct node *n;
         while(queue) {
                 cur = ft_lstpop_front(&queue);
-                n = (node *)cur->content;
+                n = (struct node *)cur->content;
                 if (!n) {
                         free(cur);
                         continue;
@@ -54,7 +54,7 @@ void print_tree(node *root)
         }
 }
 
-void free_tree(node *root)
+void free_tree(struct node *root)
 {
         if (!root)
                 return;
@@ -66,15 +66,15 @@ void free_tree(node *root)
 
 void free_args(void *a)
 {
-        args *ar = (args *)a;
+        struct args *ar = (struct args *)a;
         ft_lstclear(ar->clargs, &free);
-        ft_lstclear(ar->files, &free);
+        ft_lstclear(ar->fileHandlers, &free);
         free(ar);
 }
 
-void execute(node *ast, int in, int out, args *ar);
+void execute(struct node *ast, int in, int out, struct args *ar);
 
-void execute_pipe(node *ast, int in, t_list *l);
+void execute_pipe(struct node *ast, int in, t_list *l);
 
 int main()
 {
@@ -93,7 +93,7 @@ int main()
                         printf("Error : unclosed quotes\n");
                         goto clean;
                 }
-                node *ast = parser(lexems);
+                struct node *ast = parser(lexems);
                 print_tree(ast);
                 printf("\n");
                 t_list *l = NULL;
@@ -164,7 +164,7 @@ int o_flag(int f)
         return O_WRONLY | O_CREAT | ((f < 2) ? O_TRUNC : O_APPEND);
 }
 
-void execute(node *ast, int in, int out, args *ar)
+void execute(struct node *ast, int in, int out, struct args *ar)
 {
         if (!ast)
                 return;
@@ -201,13 +201,13 @@ void execute(node *ast, int in, int out, args *ar)
                 free(input);
                 return;
         }
-        tmp = ar->files;
+        tmp = ar->fileHandlers;
         int con = dup(STDOUT_FILENO);
         dup2(in, STDIN_FILENO);
         dup2(out, STDOUT_FILENO);
         int fd;
         while (tmp) {
-                file *f = (file *)tmp->content;
+                struct fileHandler *f = (struct fileHandler *)tmp->content;
                 if (!f->path) {
                         close(STDIN_FILENO);
                         dup2(f->flag, STDIN_FILENO);
@@ -250,10 +250,10 @@ void execute(node *ast, int in, int out, args *ar)
 
 }
 
-void execute_pipe(node *ast, int in, t_list *l)
+void execute_pipe(struct node *ast, int in, t_list *l)
 {
         if (!ast->right) {
-                execute(ast, in, 1, (args *)l->content);
+                execute(ast, in, 1, (struct args *)l->content);
                 return;
         }
                 
@@ -272,7 +272,7 @@ void execute_pipe(node *ast, int in, t_list *l)
                 waitpid(id, NULL, 0);
         } else {
                 close(p[0]);
-                execute(ast, in, p[1], (args *)l->content);
+                execute(ast, in, p[1], (struct args *)l->content);
                 close(p[1]);
                 exit(0);
         }
