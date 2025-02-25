@@ -9,13 +9,6 @@
 #include "ast.h"
 #include "expander.h"
 
-void free_args(void *a)
-{
-        struct args *ar = (struct args *)a;
-        ft_lstclear(ar->clargs, &free);
-        ft_lstclear(ar->fileHandlers, &free);
-        free(ar);
-}
 
 void execute(struct node *ast, int in, int out, struct args *ar);
 
