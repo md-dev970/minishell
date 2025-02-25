@@ -1,8 +1,10 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include "../libft/include/libft.h"
+
 #include <stdio.h>
+#include "libft.h"
+
 
 enum token_type {
         PIPE,
