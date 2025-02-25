@@ -113,43 +113,55 @@ int main()
         return 0;
 }
 
+int search_dir(DIR *dir, char *target, size_t n)
+{
+        struct dirent *d;
+        while ((d = readdir(dir)) != NULL) {
+                if (ft_strlen(d->d_name) != n)
+                        continue;
+                
+                if (ft_strncmp(d->d_name, target, n))
+                        continue;
+                closedir(dir);
+                return 1;
+        }
+        closedir(dir);
+        return 0;
+}
+
 char *search_executable(char *exec)
 {
         if (access(exec, F_OK) == 0)
                 return ft_strdup(exec);
 
         char **pathenv = ft_split(getenv("PATH"), ':');
+        if (!pathenv)
+                return NULL;
         size_t j = 0;
         DIR *dir;
-        struct dirent *d;
         size_t n = ft_strlen(exec);
-        while (pathenv && pathenv[j]) {
+        char *fullpath = NULL;
+        for (size_t j = 0; pathenv[j]; ++j) {
                 dir = opendir(pathenv[j]);
-                while ((d = readdir(dir)) != NULL) {
-                        if (ft_strlen(d->d_name) == n && !ft_strncmp(d->d_name, exec, n)) {
-                                size_t len = ft_strlen(pathenv[j]) + n + 2;
-                                char *fullpath = (char *)malloc(len * sizeof(char));
-                                fullpath[0] = '\0';
-                                ft_strlcat(fullpath, pathenv[j], len);
-                                ft_strlcat(fullpath, "/", len);
-                                ft_strlcat(fullpath, exec, len);
-                                closedir(dir);
-                                while (pathenv && pathenv[j])
-                                        free(pathenv[j++]);
-                                free(pathenv);
-                                return fullpath;
-                        }
-                                
-                }
-                closedir(dir);
-                j++;
+                if (!search_dir(dir, exec, n))
+                        continue;
+                        
+                size_t len = ft_strlen(pathenv[j]) + n + 2;
+                fullpath = (char *)malloc(len * sizeof(char));
+                fullpath[0] = '\0';
+                ft_strlcat(fullpath, pathenv[j], len);
+                ft_strlcat(fullpath, "/", len);
+                ft_strlcat(fullpath, exec, len);
+                break;
         }
-        j = 0;
-        while (pathenv && pathenv[j])
-                free(pathenv[j++]);
+        ft_foreach((void **)pathenv, &free);
         free(pathenv);
-        printf("minishell: command %s not found\n", exec);
-        return NULL;
+        return fullpath;
+}
+
+int o_flag(int f)
+{
+        return O_WRONLY | O_CREAT | ((f < 2) ? O_TRUNC : O_APPEND);
 }
 
 void execute(node *ast, int in, int out, args *ar)
@@ -185,16 +197,10 @@ void execute(node *ast, int in, int out, args *ar)
                 int status;
                 waitpid(id, &status, 0);
                 printf("command executed\nstatus: %i\n", status);
-                i = 0;
-                while (input && input[i]) {
-                        printf("freeing input: %s\n", input[i]);
-                        free(input[i]);
-                        i++;
-                }
+                ft_foreach((void **)input, &free);
                 free(input);
                 return;
         }
-        printf("beginning execution\n");
         tmp = ar->files;
         int con = dup(STDOUT_FILENO);
         dup2(in, STDIN_FILENO);
@@ -219,7 +225,7 @@ void execute(node *ast, int in, int out, args *ar)
                         close(STDIN_FILENO);
                         dup2(fd, STDIN_FILENO);
                 } else {
-                        if ((fd = open(f->path, O_WRONLY | O_CREAT | (f->flag < 2) ? O_TRUNC : O_APPEND, 0664)) < 0) {
+                        if ((fd = open(f->path, o_flag(f->flag), 0664)) < 0) {
                                 write(con, "error opening file 1\n", 22);
                                 exit(2);
                         }
@@ -228,8 +234,9 @@ void execute(node *ast, int in, int out, args *ar)
                 }
                 tmp = tmp->next;
         }
-
+        printf("beginning execution\n");
         char *pathname = search_executable(ast->left->value);
+        printf("pathname: %s\n", pathname);
         if (!pathname) {
                 write(con, "minishell:", 11);
                 ft_putstr_fd(ast->left->value, con);
@@ -245,8 +252,11 @@ void execute(node *ast, int in, int out, args *ar)
 
 void execute_pipe(node *ast, int in, t_list *l)
 {
-        if (!ast->right)
+        if (!ast->right) {
                 execute(ast, in, 1, (args *)l->content);
+                return;
+        }
+                
 
         printf("pipline\n");
         int p[2];
@@ -255,7 +265,7 @@ void execute_pipe(node *ast, int in, t_list *l)
         if (id < 0) {
                 printf("fork failed\n");
                 exit(2);
-        } else if (!id) {
+        } else if (id) {
                 close(p[1]);
                 execute_pipe(ast->right->center, p[0], l->next);
                 close(p[0]);
