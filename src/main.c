@@ -117,6 +117,7 @@ char *search_executable(char *exec)
 {
         if (access(exec, F_OK) == 0)
                 return ft_strdup(exec);
+
         char **pathenv = ft_split(getenv("PATH"), ':');
         size_t j = 0;
         DIR *dir;
@@ -231,7 +232,7 @@ void execute(node *ast, int in, int out, args *ar)
         char *pathname = search_executable(ast->left->value);
         if (!pathname) {
                 write(con, "minishell:", 11);
-                ft_putstr_fd(con, ast->left->value);
+                ft_putstr_fd(ast->left->value, con);
                 write(con, ": command not found", 20);
                 exit(3);
         }
