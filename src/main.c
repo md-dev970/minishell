@@ -76,9 +76,19 @@ void free_tree(node *root)
         free(root);
 }
 
-void execute(node *ast, int in, int out);
+void free_args(void *a)
+{
+        args *ar = (args *)a;
+        ft_lstclear(ar->clargs, &free);
+        ft_lstclear(ar->files, &free);
+        free(ar);
+}
 
-void execute_pipe(node *ast, int in);
+void expand(node *ast, t_list **l);
+
+void execute(node *ast, int in, int out, args *ar);
+
+void execute_pipe(node *ast, int in, t_list *l);
 
 args *expand_input(node *ast);
 
@@ -102,7 +112,10 @@ int main()
                 node *ast = parser(lexems);
                 print_tree(ast);
                 printf("\n");
-                execute_pipe(ast, 0);
+                t_list *l = NULL;
+                expand(ast, &l);
+                execute_pipe(ast, 0, l);
+                ft_lstclear(l, &free_args);
                 free_tree(ast);
                 goto clean;
                 clean:
@@ -116,14 +129,14 @@ int main()
         return 0;
 }
 
-void execute(node *ast, int in, int out)
+void execute(node *ast, int in, int out, args *ar)
 {
         if (!ast)
                 return;
 
 
         printf("executing command %s \n", ast->left->value);
-        args *ar = expand_input(ast);
+        // args *ar = expand_input(ast);
         char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
         t_list *tmp = ar->clargs;
         size_t i = 0;
@@ -246,10 +259,6 @@ void execute(node *ast, int in, int out)
                 printf("command executed\nstatus: %i\n", status);
         }
 
-        ft_lstclear(ar->clargs, &free);
-        ft_lstclear(ar->files, &free);
-        free(ar);
-
 
         i = 0;
         while (input && input[i]) {
@@ -260,7 +269,7 @@ void execute(node *ast, int in, int out)
         free(input);
 }
 
-void execute_pipe(node *ast, int in)
+void execute_pipe(node *ast, int in, t_list *l)
 {
         if (ast->right != NULL) {
                 printf("pipline\n");
@@ -269,18 +278,28 @@ void execute_pipe(node *ast, int in)
                 pid_t id = fork();
                 if (id > 0) {
                         close(p[1]);
-                        execute_pipe(ast->right->center, p[0]);
+                        execute_pipe(ast->right->center, p[0], l->next);
                         close(p[0]);
                         waitpid(id, NULL, 0);
                 } else {
                         close(p[0]);
-                        execute(ast, in, p[1]);
+                        execute(ast, in, p[1], (args *)l->content);
                         close(p[1]);
                         exit(0);
                 }
                 return;
         }
-        execute(ast, in, 1);
+        execute(ast, in, 1, (args *)l->content);
+}
+
+void expand(node *ast, t_list **l)
+{
+        if (!ast)
+                return;
+        args *ar = expand_input(ast);
+        ft_lstadd_back(l, ft_lstnew(ar));
+        if (ast->right)
+                expand(ast->right->center, l);
 }
 
 int heredoc(char *delimiter)
@@ -300,6 +319,102 @@ int heredoc(char *delimiter)
         return p[0];
 }
 
+char *expander(char *str)
+{
+        if (!str)
+                return NULL;
+        char *s = str;
+        printf("string to expand : %s[end]\n", s);
+        char q = '\0';
+        size_t len = ft_strlen(s);
+        t_list *lst = NULL;
+        char *tmp;
+        /* Needs refactoring */
+        for (size_t i = 0; i < len; ++i) {
+                if ((s[i] == '\'' || s[i] == '\"') && !q) {
+                        q = s[i];
+                        continue;
+                }
+                size_t j = i;
+                if (q == '\'') {
+                        while (j < len && s[j] != q) {
+                                j++;
+                        }
+                        if (j < len)
+                                q = '\0';
+                        if (j > i)
+                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                        i = j;
+                } else if (q == '\"') {
+                        while (j < len && s[j] != q) {
+                                if (s[j] == '$') {
+                                        if (j > i)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                                        i = j;
+                                        size_t k = j + 1;
+                                        while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
+                                                k++;
+                                        tmp = ft_substr(s, j + 1, k - j - 1);
+                                        if (k - j > 1)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        free(tmp);
+                                        j = k - 1;
+                                        i = j + 1;
+                                }
+                                j++;
+                        }
+                        if (j < len)
+                                q = '\0';
+                        if (j > i)
+                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                        i = j;
+                } else {
+                        while (j < len && s[j] != '\'' && s[j] != '\"') {
+                                if (s[j] == '$') {
+                                        if (j > i)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                                        i = j;
+                                        size_t k = j + 1;
+                                        while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
+                                                k++;
+                                        tmp = ft_substr(s, j + 1, k - j - 1);
+                                        if (k - j > 1)
+                                                ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        free(tmp);
+                                        j = k + 1;
+                                        i = j;
+                                }
+                                j++;
+                        }
+                        if (j > i)
+                                ft_lstadd_back(&lst, ft_lstnew(ft_substr(s, i, j - i)));
+                        i = j - 1;
+                }
+        }
+        ft_lstiter(lst, &print_lexem);
+        printf("list size: %i\n", ft_lstsize(lst));
+        t_list *tmp_lst = lst;
+        size_t n = 0;
+        while (tmp_lst) {
+                n += ft_strlen((char *)tmp_lst->content);
+                tmp_lst = tmp_lst->next;
+        }
+        char *ret = (char *)malloc((n + 1) * sizeof(char));
+        if (ret == NULL) {
+                ft_lstclear(lst, &free);
+                return NULL;
+        }
+        ret[0] = '\0';
+        tmp_lst = lst;
+        while (tmp_lst) {
+                ft_strlcat(ret, (char *)tmp_lst->content, n + 1);
+                tmp_lst = tmp_lst->next;
+        }
+        printf("result: %s[end]\n", ret);
+        ft_lstclear(lst, &free);
+        return ret;
+}
+
 void add_input(node *ast, args *input)
 {
         if (!ast) {
@@ -307,7 +422,7 @@ void add_input(node *ast, args *input)
                 return;
         }
         if (ast->type == IDENT)
-                ft_lstadd_back(&(input->clargs), ft_lstnew(ft_strdup(ast->value)));
+                ft_lstadd_back(&(input->clargs), ft_lstnew(expander(ast->value)));
 
         if (ast->type == NONE && ast->left->type == DLT) {
                 printf("delimiter is: %s\n", ast->center->value);
