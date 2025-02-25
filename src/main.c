@@ -113,6 +113,44 @@ int main()
         return 0;
 }
 
+char *search_executable(char *exec)
+{
+        if (access(exec, F_OK) == 0)
+                return ft_strdup(exec);
+        char **pathenv = ft_split(getenv("PATH"), ':');
+        size_t j = 0;
+        DIR *dir;
+        struct dirent *d;
+        size_t n = ft_strlen(exec);
+        while (pathenv && pathenv[j]) {
+                dir = opendir(pathenv[j]);
+                while ((d = readdir(dir)) != NULL) {
+                        if (ft_strlen(d->d_name) == n && !ft_strncmp(d->d_name, exec, n)) {
+                                size_t len = ft_strlen(pathenv[j]) + n + 2;
+                                char *fullpath = (char *)malloc(len * sizeof(char));
+                                fullpath[0] = '\0';
+                                ft_strlcat(fullpath, pathenv[j], len);
+                                ft_strlcat(fullpath, "/", len);
+                                ft_strlcat(fullpath, exec, len);
+                                closedir(dir);
+                                while (pathenv && pathenv[j])
+                                        free(pathenv[j++]);
+                                free(pathenv);
+                                return fullpath;
+                        }
+                                
+                }
+                closedir(dir);
+                j++;
+        }
+        j = 0;
+        while (pathenv && pathenv[j])
+                free(pathenv[j++]);
+        free(pathenv);
+        printf("minishell: command %s not found\n", exec);
+        return NULL;
+}
+
 void execute(node *ast, int in, int out, args *ar)
 {
         if (!ast)
@@ -142,135 +180,89 @@ void execute(node *ast, int in, int out, args *ar)
                 printf("fork failed\n");
                 return;
         }
-
-        if (id == 0) {
-                printf("beginning execution\n");
-                tmp = ar->files;
-                int con = dup(STDOUT_FILENO);
-                dup2(in, STDIN_FILENO);
-                printf("reached this point\n");
-                dup2(out, STDOUT_FILENO);
-                write(con,"reached this point 2\n", 22);
-                int fd;
-                while (tmp) {
-                        file *f = (file *)tmp->content;
-
-                        if (f->path) {
-                                write(con, "file to open: ", 14);
-                                write(con, f->path, ft_strlen(f->path));
-                                write(con, "\n", 2);
-                                if (f->flag == 0) {
-                                        fd = open(f->path, O_RDONLY);
-                                        if (fd < 0) {
-                                                write(con, "error opening file 0\n", 22);
-                                                exit(1);
-                                        }
-                                        close(STDIN_FILENO);
-                                        dup2(fd, STDIN_FILENO);
-                                } else if (f->flag == 1) {
-                                        fd = open(f->path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-                                        if (fd < 0) {
-                                                write(con, "error opening file 1\n", 22);
-                                                exit(2);
-                                        }
-                                        close(STDOUT_FILENO);
-                                        dup2(fd, STDOUT_FILENO);
-                                } else {
-                                        fd = open(f->path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-                                        if (fd < 0) {
-                                                write(con, "error opening file 2\n", 22);
-                                                exit(3);
-                                        }
-                                        close(STDOUT_FILENO);
-                                        dup2(fd, STDOUT_FILENO);
-                                }
-                        } else {
-                                close(STDIN_FILENO);
-                                dup2(f->flag, STDIN_FILENO);
-                        }
-                        tmp = tmp->next;
-                }
-                char *fullpath = ast->left->value;
-                if (access(fullpath, F_OK) == 0)
-                        goto straight;
-                char **pathenv = ft_split(getenv("PATH"), ':');
-                size_t j = 0;
-                DIR *dir;
-                struct dirent *d;
-                while (pathenv && pathenv[j]) {
-                        dir = opendir(pathenv[j]);
-                        while ((d = readdir(dir)) != NULL) {
-                                if (ft_strlen(d->d_name) == ft_strlen(ast->left->value)
-                                && !ft_strncmp(d->d_name, ast->left->value, ft_strlen(ast->left->value))) {
-                                        fullpath = (char *)malloc((ft_strlen(pathenv[j]) + 
-                                        ft_strlen(ast->left->value) + 2) * sizeof(char));
-                                        fullpath[0] = '\0';
-                                        ft_strlcat(fullpath, pathenv[j], ft_strlen(pathenv[j]) + 
-                                        ft_strlen(ast->left->value) + 2);
-                                        ft_strlcat(fullpath, "/", ft_strlen(pathenv[j]) + 
-                                        ft_strlen(ast->left->value) + 2);
-                                        ft_strlcat(fullpath, ast->left->value, ft_strlen(pathenv[j]) + 
-                                        ft_strlen(ast->left->value) + 2);
-                                        closedir(dir);
-                                        goto execute;
-                                }
-                                        
-                        }
-                        closedir(dir);
-                        j++;
-                }
-                j = 0;
-                while (pathenv && pathenv[j])
-                        free(pathenv[j++]);
-                free(pathenv);
-                printf("minishell: command %s not found\n", ast->left->value);
-                exit(5);
-                execute:
-                j = 0;
-                while (pathenv && pathenv[j])
-                        free(pathenv[j++]);
-                free(pathenv);
-                straight:
-                if (execve(fullpath, input, __environ) < 0) {
-                        printf("failed executing command\n");
-                        exit(4);
-                }
-
-        } else {
+        if (id) {
                 int status;
                 waitpid(id, &status, 0);
                 printf("command executed\nstatus: %i\n", status);
+                i = 0;
+                while (input && input[i]) {
+                        printf("freeing input: %s\n", input[i]);
+                        free(input[i]);
+                        i++;
+                }
+                free(input);
+                return;
+        }
+        printf("beginning execution\n");
+        tmp = ar->files;
+        int con = dup(STDOUT_FILENO);
+        dup2(in, STDIN_FILENO);
+        dup2(out, STDOUT_FILENO);
+        int fd;
+        while (tmp) {
+                file *f = (file *)tmp->content;
+                if (!f->path) {
+                        close(STDIN_FILENO);
+                        dup2(f->flag, STDIN_FILENO);
+                        tmp = tmp->next;
+                        continue;
+                }
+                write(con, "file to open: ", 14);
+                write(con, f->path, ft_strlen(f->path));
+                write(con, "\n", 2);
+                if (!f->flag) {
+                        if ((fd = open(f->path, O_RDONLY)) < 0) {
+                                write(con, "error opening file 0\n", 22);
+                                exit(1);
+                        }
+                        close(STDIN_FILENO);
+                        dup2(fd, STDIN_FILENO);
+                } else {
+                        if ((fd = open(f->path, O_WRONLY | O_CREAT | (f->flag < 2) ? O_TRUNC : O_APPEND, 0664)) < 0) {
+                                write(con, "error opening file 1\n", 22);
+                                exit(2);
+                        }
+                        close(STDOUT_FILENO);
+                        dup2(fd, STDOUT_FILENO);
+                }
+                tmp = tmp->next;
         }
 
-
-        i = 0;
-        while (input && input[i]) {
-                printf("freeing input: %s\n", input[i]);
-                free(input[i]);
-                i++;
+        char *pathname = search_executable(ast->left->value);
+        if (!pathname) {
+                write(con, "minishell:", 11);
+                ft_putstr_fd(con, ast->left->value);
+                write(con, ": command not found", 20);
+                exit(3);
         }
-        free(input);
+        if (execve(pathname, input, __environ) < 0) {
+                printf("failed executing command\n");
+                exit(4);
+        }
+
 }
 
 void execute_pipe(node *ast, int in, t_list *l)
 {
-        if (ast->right != NULL) {
-                printf("pipline\n");
-                int p[2];
-                pipe(p);
-                pid_t id = fork();
-                if (id > 0) {
-                        close(p[1]);
-                        execute_pipe(ast->right->center, p[0], l->next);
-                        close(p[0]);
-                        waitpid(id, NULL, 0);
-                } else {
-                        close(p[0]);
-                        execute(ast, in, p[1], (args *)l->content);
-                        close(p[1]);
-                        exit(0);
-                }
-                return;
+        if (!ast->right)
+                execute(ast, in, 1, (args *)l->content);
+
+        printf("pipline\n");
+        int p[2];
+        pipe(p);
+        pid_t id = fork();
+        if (id < 0) {
+                printf("fork failed\n");
+                exit(2);
+        } else if (!id) {
+                close(p[1]);
+                execute_pipe(ast->right->center, p[0], l->next);
+                close(p[0]);
+                waitpid(id, NULL, 0);
+        } else {
+                close(p[0]);
+                execute(ast, in, p[1], (args *)l->content);
+                close(p[1]);
+                exit(0);
         }
-        execute(ast, in, 1, (args *)l->content);
 }
