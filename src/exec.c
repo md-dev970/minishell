@@ -86,10 +86,30 @@ void builtin_unset(char *input[])
         exit(0);
 }
 
+static size_t check_opt(char *opt)
+{
+        size_t n = ft_strlen(opt);
+        if (n < 2 || opt[0] != '-')
+                return 0;
+        for (int i = 1; i < n; ++i) {
+                if (opt[i] == 'n')
+                        continue;
+                return 0;
+        }
+        return 1;
+}
 
 void builtin_echo(char *input[])
 {
-        ft_putstr_fd("executing built in echo\n", STDOUT_FILENO);
+        if (!input || !input[0]) {
+                printf("\n");
+                exit(0);
+        }
+        size_t i;
+        char newline = ((i = check_opt(input[0])) == 0) ? '\n' : '\0';
+        while (input[i])
+                printf("%s ", input[i++]);
+        printf("%c", newline);
         exit(0);
 }
 
