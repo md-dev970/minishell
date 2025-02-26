@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <readline/history.h>
 #include <string.h>
 
 #include "lexer.h"
@@ -10,6 +11,7 @@
 
 
 
+
 int main()
 {
         int quit = 0;
@@ -17,6 +19,7 @@ int main()
         t_list *lexems = NULL;
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
+                add_history(inputBuffer);
                 if (strcmp(inputBuffer, "exit") == 0) {
                         quit = 1;
                         goto clean;
