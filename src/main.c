@@ -19,6 +19,8 @@ int main()
         t_list *lexems = NULL;
         while(quit == 0) {
                 inputBuffer = readline("minishell>");
+                if (*inputBuffer == '\0')
+                        goto clean;
                 add_history(inputBuffer);
                 if (strcmp(inputBuffer, "exit") == 0) {
                         quit = 1;
