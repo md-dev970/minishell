@@ -139,6 +139,8 @@ static void run_command(struct node *ast, int in, int out, struct args *ar)
 
 void execute(struct node *ast, int in, t_list *l)
 {
+        if (!ast)
+                return;
         if (!ast->right) {
                 run_command(ast, in, 1, (struct args *)l->content);
                 return;
