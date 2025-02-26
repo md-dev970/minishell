@@ -51,13 +51,115 @@ static int o_flag(int f)
         return O_WRONLY | O_CREAT | ((f < 2) ? O_TRUNC : O_APPEND);
 }
 
-static void run_command(struct node *ast, int in, int out, struct args *ar)
+
+void builtin_cd(char *input[])
 {
-        if (!ast)
+        ft_putstr_fd("executing built in cd\n", STDOUT_FILENO);
+        exit(0);
+}
+
+
+void builtin_pwd()
+{
+        ft_putstr_fd("executing built in pwd\n", STDOUT_FILENO);
+        exit(0);
+}
+
+
+void builtin_env()
+{
+        ft_putstr_fd("executing built in env\n", STDOUT_FILENO);
+        exit(0);
+}
+
+
+void builtin_export(char *input[])
+{
+        ft_putstr_fd("executing built in export\n", STDOUT_FILENO);
+        exit(0);
+}
+
+
+void builtin_unset(char *input[])
+{
+        ft_putstr_fd("executing built in unset\n", STDOUT_FILENO);
+        exit(0);
+}
+
+
+void builtin_echo(char *input[])
+{
+        ft_putstr_fd("executing built in echo\n", STDOUT_FILENO);
+        exit(0);
+}
+
+
+void builtin_exit(char *input[])
+{
+        ft_putstr_fd("executing built in exit\n", STDOUT_FILENO);
+        exit(0);
+}
+
+void non_builtin(char *input[])
+{
+        printf("executing non built in\n");
+        char *pathname = search_executable(input[0]);
+        if (!pathname) {
+                write(STDOUT_FILENO, "minishell: ", 12);
+                write(STDOUT_FILENO, input[0], ft_strlen(input[0]) + 1);
+                write(STDOUT_FILENO, ": command not found\n", 21);
+                exit(1);
+        }
+        int s = execve(pathname, input, __environ);
+        exit(s);
+}
+
+void execute_command(char *input[])
+{
+        if (!input || !input[0])
+                exit(12);
+        
+        char *cmd = input[0];
+        
+        switch (ft_strlen(cmd)) {
+        case 2:
+                if (!ft_strncmp(cmd, "cd", 2))
+                        builtin_cd(input + 1);
+                break;
+        case 3:
+                if (!ft_strncmp(cmd, "pwd", 3))
+                        builtin_pwd();
+                else if (!ft_strncmp(cmd, "env", 3))
+                        builtin_env();
+                break;
+        case 4:
+                if (!ft_strncmp(cmd, "echo", 4))
+                        builtin_echo(input + 1);
+                else if (!ft_strncmp(cmd, "exit", 4))
+                        builtin_exit(input + 1);
+                break;
+        case 5:
+                if (!ft_strncmp(cmd, "unset", 5))
+                        builtin_unset(input + 1);
+                break;
+        case 6:
+                if (!ft_strncmp(cmd, "export", 6))
+                        builtin_export(input + 1);
+                break;
+        default:
+                break;
+        }
+        non_builtin(input);
+}
+
+static void prepare_command(int in, int out, struct args *ar)
+{
+        if (!ar || !ar->clargs || !ar->clargs->content)
                 return;
 
+        char *cmd = (char *)ar->clargs->content;
 
-        printf("executing command %s \n", ast->left->value);
+        printf("executing command %s \n", cmd);
         char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
         t_list *tmp = ar->clargs;
         size_t i = 0;
@@ -122,27 +224,16 @@ static void run_command(struct node *ast, int in, int out, struct args *ar)
                 tmp = tmp->next;
         }
         printf("beginning execution\n");
-        char *pathname = search_executable(ast->left->value);
-        printf("pathname: %s\n", pathname);
-        if (!pathname) {
-                write(con, "minishell:", 11);
-                ft_putstr_fd(ast->left->value, con);
-                write(con, ": command not found", 20);
-                exit(3);
-        }
-        if (execve(pathname, input, __environ) < 0) {
-                printf("failed executing command\n");
-                exit(4);
-        }
+        execute_command(input);
 
 }
 
-void execute(struct node *ast, int in, t_list *l)
+void handle_commands(struct node *ast, int in, t_list *l)
 {
         if (!ast)
                 return;
         if (!ast->right) {
-                run_command(ast, in, 1, (struct args *)l->content);
+                prepare_command(in, 1, (struct args *)l->content);
                 return;
         }
                 
@@ -156,12 +247,12 @@ void execute(struct node *ast, int in, t_list *l)
                 exit(2);
         } else if (id) {
                 close(p[1]);
-                execute(ast->right->center, p[0], l->next);
+                handle_commands(ast->right->center, p[0], l->next);
                 close(p[0]);
                 waitpid(id, NULL, 0);
         } else {
                 close(p[0]);
-                run_command(ast, in, p[1], (struct args *)l->content);
+                prepare_command(in, p[1], (struct args *)l->content);
                 close(p[1]);
                 exit(0);
         }
