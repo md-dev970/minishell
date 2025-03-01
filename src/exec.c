@@ -149,7 +149,7 @@ void non_builtin(char *input[])
         exit(s);
 }
 
-void execute_command(char *input[])
+void execute_command(char *input[], int cin, int cout)
 {
         if (!input || !input[0])
                 exit(12);
@@ -202,6 +202,8 @@ void execute_command(char *input[])
         cleanup:
         ft_foreach((void **)input, &free);
         free(input);
+        dup2(cin, STDIN_FILENO);
+        dup2(cout, STDOUT_FILENO);
 }
 
 static void prepare_command(int in, int out, struct args *ar)
@@ -230,7 +232,8 @@ static void prepare_command(int in, int out, struct args *ar)
         printf("---------------------------------\nCommand output\n");
 
         tmp = ar->fileHandlers;
-        int con = dup(STDOUT_FILENO);
+        int cout = dup(STDOUT_FILENO);
+        int cin = dup(STDIN_FILENO);
         dup2(in, STDIN_FILENO);
         dup2(out, STDOUT_FILENO);
         int fd;
@@ -242,19 +245,19 @@ static void prepare_command(int in, int out, struct args *ar)
                         tmp = tmp->next;
                         continue;
                 }
-                write(con, "file to open: ", 14);
-                write(con, f->path, ft_strlen(f->path));
-                write(con, "\n", 2);
+                write(cout, "file to open: ", 14);
+                write(cout, f->path, ft_strlen(f->path));
+                write(cout, "\n", 2);
                 if (!f->flag) {
                         if ((fd = open(f->path, O_RDONLY)) < 0) {
-                                write(con, "error opening file 0\n", 22);
+                                write(cout, "error opening file 0\n", 22);
                                 exit(1);
                         }
                         close(STDIN_FILENO);
                         dup2(fd, STDIN_FILENO);
                 } else {
                         if ((fd = open(f->path, o_flag(f->flag), 0664)) < 0) {
-                                write(con, "error opening file 1\n", 22);
+                                write(cout, "error opening file 1\n", 22);
                                 exit(2);
                         }
                         close(STDOUT_FILENO);
@@ -263,7 +266,7 @@ static void prepare_command(int in, int out, struct args *ar)
                 tmp = tmp->next;
         }
         printf("beginning execution\n");
-        execute_command(input);
+        execute_command(input, cin, cout);
 
 }
 
