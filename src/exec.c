@@ -80,21 +80,25 @@ void builtin_cd(char *input[])
 void builtin_env()
 {
         ft_putstr_fd("executing built in env\n", STDOUT_FILENO);
-        exit(0);
+        size_t i = 0;
+        while (__environ[i]) {
+                printf("%s\n", __environ[i++]);
+        }
+        return;
 }
 
 
 void builtin_export(char *input[])
 {
         ft_putstr_fd("executing built in export\n", STDOUT_FILENO);
-        exit(0);
+        return;
 }
 
 
 void builtin_unset(char *input[])
 {
         ft_putstr_fd("executing built in unset\n", STDOUT_FILENO);
-        exit(0);
+        return;
 }
 
 static size_t check_opt(char *opt)
@@ -225,19 +229,6 @@ static void prepare_command(int in, int out, struct args *ar)
 
         printf("---------------------------------\nCommand output\n");
 
-        // pid_t id = fork();
-        // if (id < 0) {
-        //         printf("fork failed\n");
-        //         return;
-        // }
-        // if (id) {
-        //         int status;
-        //         wait(&status);
-        //         printf("command executed\nstatus: %i\n", status);
-        //         ft_foreach((void **)input, &free);
-        //         free(input);
-        //         return;
-        // }
         tmp = ar->fileHandlers;
         int con = dup(STDOUT_FILENO);
         dup2(in, STDIN_FILENO);
