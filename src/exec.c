@@ -57,27 +57,23 @@ void builtin_pwd()
         ft_putstr_fd(cwd, STDOUT_FILENO);
         ft_putchar_fd('\n', STDOUT_FILENO);
         free(cwd);
-        exit(0);
 }
 
 void builtin_cd(char *input[])
 {
-        if (!input || !input[0]) {
+        if (!input || !input[0] || *input[0] == '~') {
                 chdir(getenv("HOME"));
-                builtin_pwd();
-                exit(0);
-        }
-                
-        if (input[1]) {
+        } else if (input[1]) {
                 ft_putstr_fd("minishell: cd: too many arguments\n", STDOUT_FILENO);
-                exit(-1);
+        } else {
+                int s;
+                if (!(s = chdir(input[0]))) {
+                        ft_putstr_fd("cd: command failed\n", STDOUT_FILENO);
+                        perror("error: ");
+                }
         }
-        int s;
-        if (!(s = chdir(input[0]))) {
-                ft_putstr_fd("cd: command failed\n", STDOUT_FILENO);
-                perror("error: ");
-        }
-        exit(s);
+
+        return;
 }
 
 
