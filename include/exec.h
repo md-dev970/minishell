@@ -8,6 +8,6 @@
 #include "node.h"
 #include "args.h"
 
-void handle_commands(struct node *ast, int in, t_list *l);
+void handle_commands(struct node *ast, t_list *l);
 
 #endif /* EXEC_H */

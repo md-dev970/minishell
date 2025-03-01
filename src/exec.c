@@ -212,19 +212,19 @@ static void prepare_command(int in, int out, struct args *ar)
 
         printf("---------------------------------\nCommand output\n");
 
-        pid_t id = fork();
-        if (id < 0) {
-                printf("fork failed\n");
-                return;
-        }
-        if (id) {
-                int status;
-                wait(&status);
-                printf("command executed\nstatus: %i\n", status);
-                ft_foreach((void **)input, &free);
-                free(input);
-                return;
-        }
+        // pid_t id = fork();
+        // if (id < 0) {
+        //         printf("fork failed\n");
+        //         return;
+        // }
+        // if (id) {
+        //         int status;
+        //         wait(&status);
+        //         printf("command executed\nstatus: %i\n", status);
+        //         ft_foreach((void **)input, &free);
+        //         free(input);
+        //         return;
+        // }
         tmp = ar->fileHandlers;
         int con = dup(STDOUT_FILENO);
         dup2(in, STDIN_FILENO);
@@ -263,13 +263,21 @@ static void prepare_command(int in, int out, struct args *ar)
 
 }
 
-void handle_commands(struct node *ast, int in, t_list *l)
+void handle_pipeline(struct node *ast, int in, t_list *l)
 {
         if (!ast)
                 return;
         if (!ast->right) {
-                prepare_command(in, 1, (struct args *)l->content);
-                return;
+                pid_t id = fork();
+                if (id < 0) {
+                        printf("fork failed\n");
+                        exit(2);
+                } else if (id) {
+                        wait(NULL);
+                        return;
+                } else {
+                        prepare_command(in, 1, (struct args *)l->content);
+                }
         }
                 
 
@@ -282,7 +290,7 @@ void handle_commands(struct node *ast, int in, t_list *l)
                 exit(2);
         } else if (id) {
                 close(p[1]);
-                handle_commands(ast->right->center, p[0], l->next);
+                handle_pipeline(ast->right->center, p[0], l->next);
                 close(p[0]);
                 wait(NULL);
         } else {
@@ -291,4 +299,57 @@ void handle_commands(struct node *ast, int in, t_list *l)
                 close(p[1]);
                 exit(0);
         }
+}
+
+void handle_commands(struct node *ast, t_list *l)
+{
+        if (!ast)
+                return;
+        if (ast->right) {
+                handle_pipeline(ast, 0, l);
+                return;
+        }
+        char *cmd = ast->left->value;
+        switch (ft_strlen(cmd)) {
+        case 2:
+                if (!ft_strncmp(cmd, "cd", 2)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                }
+                        
+                break;
+        case 3:
+                if (!ft_strncmp(cmd, "pwd", 3)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                } else if (!ft_strncmp(cmd, "env", 3)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                }
+                break;
+        case 4:
+                if (!ft_strncmp(cmd, "echo", 4)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                } else if (!ft_strncmp(cmd, "exit", 4)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                }
+                break;
+        case 5:
+                if (!ft_strncmp(cmd, "unset", 5)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                }
+                break;
+        case 6:
+                if (!ft_strncmp(cmd, "export", 6)) {
+                        prepare_command(0, 1, (struct args*)l->content);
+                        return;
+                }
+                break;
+        default:
+                break;
+        }
+        handle_pipeline(ast, 0, l);
 }

@@ -37,7 +37,7 @@ int main()
                 printf("\n");
                 t_list *l = NULL;
                 expander(ast, &l);
-                handle_commands(ast, 0, l);
+                handle_commands(ast, l);
                 ft_lstclear(l, &free_args);
                 free_tree(ast);
                 goto clean;
