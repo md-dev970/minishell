@@ -151,36 +151,53 @@ void execute_command(char *input[])
                 exit(12);
         
         char *cmd = input[0];
-        
+        printf("checking command %s\n", cmd);
         switch (ft_strlen(cmd)) {
         case 2:
-                if (!ft_strncmp(cmd, "cd", 2))
+                if (!ft_strncmp(cmd, "cd", 2)) {
                         builtin_cd(input + 1);
+                        goto cleanup;
+                }
+                        
                 break;
         case 3:
-                if (!ft_strncmp(cmd, "pwd", 3))
+                if (!ft_strncmp(cmd, "pwd", 3)) {
                         builtin_pwd();
-                else if (!ft_strncmp(cmd, "env", 3))
+                        goto cleanup;
+                } else if (!ft_strncmp(cmd, "env", 3)) {
                         builtin_env();
+                        goto cleanup;
+                }
                 break;
         case 4:
-                if (!ft_strncmp(cmd, "echo", 4))
+                if (!ft_strncmp(cmd, "echo", 4)) {
                         builtin_echo(input + 1);
-                else if (!ft_strncmp(cmd, "exit", 4))
+                        goto cleanup;
+                } else if (!ft_strncmp(cmd, "exit", 4)) {
                         builtin_exit(input + 1);
+                        goto cleanup;
+                }
                 break;
         case 5:
-                if (!ft_strncmp(cmd, "unset", 5))
+                if (!ft_strncmp(cmd, "unset", 5)) {
                         builtin_unset(input + 1);
+                        goto cleanup;
+                }
                 break;
         case 6:
-                if (!ft_strncmp(cmd, "export", 6))
+                if (!ft_strncmp(cmd, "export", 6)) {
                         builtin_export(input + 1);
+                        goto cleanup;
+                }
+                        
                 break;
         default:
                 break;
         }
         non_builtin(input);
+        cleanup:
+        ft_foreach((void **)input, &free);
+        free(input);
 }
 
 static void prepare_command(int in, int out, struct args *ar)
