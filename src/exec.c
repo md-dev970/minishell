@@ -219,7 +219,7 @@ static void prepare_command(int in, int out, struct args *ar)
         }
         if (id) {
                 int status;
-                waitpid(id, &status, 0);
+                wait(&status);
                 printf("command executed\nstatus: %i\n", status);
                 ft_foreach((void **)input, &free);
                 free(input);
@@ -284,7 +284,7 @@ void handle_commands(struct node *ast, int in, t_list *l)
                 close(p[1]);
                 handle_commands(ast->right->center, p[0], l->next);
                 close(p[0]);
-                waitpid(id, NULL, 0);
+                wait(NULL);
         } else {
                 close(p[0]);
                 prepare_command(in, p[1], (struct args *)l->content);
