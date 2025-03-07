@@ -51,5 +51,6 @@
 #include "ft_lstmap.h"
 #include "ft_lstpop_front.h"
 #include "ft_foreach.h"
+#include "ft_arrsize.h"
 
 #endif /* LIBFT_H */

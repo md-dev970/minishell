@@ -96,6 +96,7 @@ void builtin_export(char *input[])
                         i++;
                         continue;
                 }
+                
                 ft_lstadd_back(&l, ft_lstnew(ft_strdup(input[i])));
                 v++;
                 i++;
