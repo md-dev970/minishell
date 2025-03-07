@@ -72,26 +72,58 @@ void builtin_cd(char *input[])
                         perror("error: ");
                 }
         }
-
-        return;
 }
 
 
 void builtin_env()
 {
-        ft_putstr_fd("executing built in env\n", STDOUT_FILENO);
         size_t i = 0;
-        while (__environ[i]) {
+        while (__environ[i])
                 printf("%s\n", __environ[i++]);
-        }
-        return;
 }
 
 
 void builtin_export(char *input[])
 {
-        ft_putstr_fd("executing built in export\n", STDOUT_FILENO);
-        return;
+        if (!input)
+                return;
+        size_t i = 0;
+        size_t v = 0;
+        t_list *l = NULL;
+        while (input[i]) {
+                if (!ft_isalpha(*input[i]) && *input[i] != '_') {
+                        printf("minishell: '%s' is not a valid identifier\n", input[i]);
+                        i++;
+                        continue;
+                }
+                ft_lstadd_back(&l, ft_lstnew(ft_strdup(input[i])));
+                v++;
+                i++;
+        }
+        size_t e = 0;
+        while (__environ && __environ[e]) {
+                e++;
+        }
+        t_list *prev;
+        char **new_environ = (char **)malloc((e + v + 1) * sizeof(char *));
+        if (!new_environ) {
+                printf("Error: coudn't allocate memory\n");
+                return;
+        }
+        for (i = 0; i < e; ++i) {
+                new_environ[i] = ft_strdup(__environ[i]);
+                free(__environ[i]);
+        }
+        free(__environ);
+
+        for (i = e; i < e + v; ++i) {
+                new_environ[i] = (char *)l->content;
+                prev = l;
+                l = l->next;
+                free(prev);
+        }
+        new_environ[e + v] = NULL;
+        __environ = new_environ;
 }
 
 
@@ -118,14 +150,13 @@ void builtin_echo(char *input[])
 {
         if (!input || !input[0]) {
                 printf("\n");
-                exit(0);
+                return;
         }
         size_t i;
         char newline = ((i = check_opt(input[0])) == 0) ? '\n' : '\0';
         while (input[i])
                 printf("%s ", input[i++]);
         printf("%c", newline);
-        exit(0);
 }
 
 

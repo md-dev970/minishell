@@ -17,14 +17,24 @@ int main()
         int quit = 0;
         char *inputBuffer;
         t_list *lexems = NULL;
+
+        inputBuffer = readline("minishell>");
+        char **tmp = __environ;
+        size_t e = 0;
+        while (__environ && __environ[e]) {
+                e++;
+        }
+        char **env = (char **)malloc((e + 1) * sizeof(char *));
+        env[e] = NULL;
+        for (size_t i = 0; i < e; ++i) {
+                env[i] = ft_strdup(__environ[i]);
+        }
+
+        __environ = env;
         while(quit == 0) {
-                inputBuffer = readline("minishell>");
-                if (*inputBuffer == '\0')
-                        goto clean;
                 add_history(inputBuffer);
                 if (strcmp(inputBuffer, "exit") == 0) {
-                        quit = 1;
-                        goto clean;
+                        break;
                 }
                         
                 int r = lexer(&lexems, inputBuffer);
@@ -40,14 +50,23 @@ int main()
                 handle_commands(ast, l);
                 ft_lstclear(l, &free_args);
                 free_tree(ast);
-                goto clean;
                 clean:
-                free(inputBuffer);
-                ft_lstiter(lexems, &print_token);
                 ft_lstclear(lexems, &free_token);
                 lexems = NULL;
+                free(inputBuffer);
+                inputBuffer = readline("minishell>");
         }
         rl_clear_history();
+        free(inputBuffer);
+        e = 0;
+        while (__environ && __environ[e]) {
+                e++;
+        }
+        for (size_t i = 0; i < e; ++i) {
+                free(__environ[i]);
+        }
+        free(__environ);
+        __environ = tmp;
 
         return 0;
 }
