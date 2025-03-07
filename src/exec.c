@@ -90,13 +90,53 @@ void builtin_export(char *input[])
         size_t i = 0;
         size_t v = 0;
         t_list *l = NULL;
+        char **tmp;
         while (input[i]) {
                 if (!ft_isalpha(*input[i]) && *input[i] != '_') {
                         printf("minishell: '%s' is not a valid identifier\n", input[i]);
                         i++;
                         continue;
                 }
-                
+                tmp = ft_split(input[i], '=');
+                if (ft_arrsize((void **)tmp) < 2) {
+                        size_t j = 0;
+                        while (tmp && tmp[j])
+                                free(tmp[j++]);
+                        free(tmp);
+                        i++;
+                        continue;
+                }
+                size_t e = 0;
+                int exist = 0;
+                while (__environ && __environ[e]) {
+                        char **var = ft_split(__environ[e], '=');
+                        if (ft_strlen(var[0]) == ft_strlen(tmp[0]) && ft_strncmp(var[0], tmp[0], ft_strlen(tmp[0]))) {
+                                for (size_t i = 0; i < ft_arrsize((void **)var); ++i)
+                                        free(var[i]);
+                                free(var);
+                                exist = 1;
+                                break;
+                        }
+                        for (size_t i = 0; i < ft_arrsize((void **)var); ++i)
+                                free(var[i]);
+                        free(var);
+                        e++;
+                }
+                if (exist) {
+                        free(__environ[e]);
+                        __environ[e] = ft_strdup(input[i]);
+                        size_t j = 0;
+                        while (tmp && tmp[j])
+                                free(tmp[j++]);
+                        free(tmp);
+                        break;
+                }
+                        
+                size_t j = 0;
+                while (tmp && tmp[j])
+                        free(tmp[j++]);
+                free(tmp);   
+
                 ft_lstadd_back(&l, ft_lstnew(ft_strdup(input[i])));
                 v++;
                 i++;
