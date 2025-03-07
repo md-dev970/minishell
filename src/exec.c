@@ -110,7 +110,7 @@ void builtin_export(char *input[])
                 int exist = 0;
                 while (__environ && __environ[e]) {
                         char **var = ft_split(__environ[e], '=');
-                        if (ft_strlen(var[0]) == ft_strlen(tmp[0]) && ft_strncmp(var[0], tmp[0], ft_strlen(tmp[0]))) {
+                        if (ft_strlen(var[0]) == ft_strlen(tmp[0]) && !ft_strncmp(var[0], tmp[0], ft_strlen(tmp[0]))) {
                                 for (size_t i = 0; i < ft_arrsize((void **)var); ++i)
                                         free(var[i]);
                                 free(var);
@@ -170,7 +170,77 @@ void builtin_export(char *input[])
 
 void builtin_unset(char *input[])
 {
-        ft_putstr_fd("executing built in unset\n", STDOUT_FILENO);
+        if (!input)
+                return;
+        size_t input_size = ft_arrsize((void **)input);
+        size_t v = 0;
+        size_t env_size = ft_arrsize((void **)__environ);
+        t_list *l = NULL;
+        t_list *tmp = l;
+        int exist = 0;
+        char **var;
+        for (size_t i = 0; i < input_size; ++i) {
+                for (size_t j = 0; j < env_size; ++j) {
+                        var = ft_split(__environ[j], '=');
+                        if (ft_strlen(var[0]) == ft_strlen(input[i]) && !ft_strncmp(var[0], input[i], ft_strlen(input[i]))) {
+                                exist = 0;
+                                tmp = l;
+                                
+                                while (tmp) {
+                                        if (ft_strlen(var[0]) == ft_strlen((char *)tmp->content) 
+                                        && !ft_strncmp(var[0], (char *)tmp->content, ft_strlen(var[0]))) {
+                                                
+                                                exist = 1;
+                                                break;
+                                        }
+                                        tmp = tmp->next;
+                                }
+                                if (!exist) {
+                                        ft_lstadd_back(&l, ft_lstnew(ft_strdup(input[i])));
+                                }
+                                ft_foreach((void **)var, &free);
+                                free(var);
+                                        
+                                break;
+                        }
+                        ft_foreach((void **)var, &free);
+                        free(var);
+                }
+        }
+        int lst_size = ft_lstsize(l);
+        printf("vars to unset: %i\n", lst_size);
+        if (lst_size == 0) {
+                ft_lstclear(l, &free);
+                return;
+        }
+
+        char **new_environ = (char **)malloc((env_size - lst_size + 1) * sizeof(char *));
+        size_t nv = 0;
+
+        for (size_t i = 0; i < env_size; ++i) {
+                exist = 0;
+                tmp = l;
+                var = ft_split(__environ[i], '=');
+                while (tmp) {
+                        if (ft_strlen(var[0]) == ft_strlen((char *)tmp->content) 
+                        && !ft_strncmp(var[0], (char *)tmp->content, ft_strlen(var[0]))) {
+                                exist = 1;
+                                break;
+                        }
+                        tmp = tmp->next;
+                }
+                ft_foreach((void **)var, &free);
+                free(var);
+                if (exist)
+                        continue;
+                new_environ[nv++] = ft_strdup(__environ[i]);
+
+        }
+        ft_foreach((void **)__environ, &free);
+        free(__environ);
+        ft_lstclear(l, &free);
+        new_environ[nv] = NULL;
+        __environ = new_environ;
         return;
 }
 
