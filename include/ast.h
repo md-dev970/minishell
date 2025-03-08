@@ -3,7 +3,7 @@
 
 #include "token.h"
 #include "node.h"
-#include "libft.h"
+#include "ft/libft.h"
 
 void print_tree(struct node *root);
 

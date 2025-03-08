@@ -3,7 +3,7 @@
 
 
 #include <stdio.h>
-#include "libft.h"
+#include "ft/libft.h"
 
 
 enum token_type {

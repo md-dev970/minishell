@@ -1,7 +1,7 @@
 #ifndef ARGS_H
 #define ARGS_H
 
-#include "libft.h"
+#include "ft/libft.h"
 
 struct fileHandler {
         char *path;
