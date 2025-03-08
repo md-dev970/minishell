@@ -4,11 +4,16 @@ static int heredoc(char *delimiter)
 {
         char *input = readline(">");
         int p[2];
-        pipe(p);
+        if (pipe(p)) {
+                #ifdef DEBUG
+                printf("Pipe opening failed\n");
+                #endif
+                return - 1;
+        }
         while (ft_strlen(input) != ft_strlen(delimiter) ||
                 ft_strncmp(input, delimiter, ft_strlen(input)) != 0) {
-                write(p[1], input, ft_strlen(input));
-                write(p[1], "\n", 1);
+                ft_putstr_fd(input, p[1]);
+                ft_putchar_fd('\n', p[1]);
                 free(input);
                 input = readline(">");
         }

@@ -61,12 +61,12 @@ void builtin_pwd()
 
 void builtin_cd(char *input[])
 {
+        int s;
         if (!input || !input[0] || *input[0] == '~') {
-                chdir(getenv("HOME"));
+                s = chdir(getenv("HOME"));
         } else if (input[1]) {
                 ft_putstr_fd("minishell: cd: too many arguments\n", STDOUT_FILENO);
         } else {
-                int s;
                 if (!(s = chdir(input[0]))) {
                         ft_putstr_fd("cd: command failed\n", STDOUT_FILENO);
                         perror("error: ");
@@ -289,9 +289,9 @@ void non_builtin(char *input[])
         #endif
         char *pathname = search_executable(input[0]);
         if (!pathname) {
-                write(STDOUT_FILENO, "minishell: ", 12);
-                write(STDOUT_FILENO, input[0], ft_strlen(input[0]) + 1);
-                write(STDOUT_FILENO, ": command not found\n", 21);
+                ft_putstr_fd("minishell", STDOUT_FILENO);
+                ft_putstr_fd(input[0], STDOUT_FILENO);
+                ft_putstr_fd(": command not found\n", STDOUT_FILENO);
                 exit(1);
         }
         int s = execve(pathname, input, __environ);
@@ -458,7 +458,12 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
         printf("pipline\n");
         #endif
         int p[2];
-        pipe(p);
+        if (pipe(p)) {
+                #ifdef DEBUG
+                printf("Pipe opening failed\n");
+                #endif
+                return;
+        }
         pid_t id = fork();
         if (id < 0) {
                 #ifdef DEBUG
