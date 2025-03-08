@@ -1,0 +1,3 @@
+Implement debug and release versions.
+Fix export assign env vars with invalid identifiers.
+Possible memory leak ?
