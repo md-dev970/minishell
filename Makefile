@@ -1,5 +1,3 @@
-BUILD_TYPE ?= debug
-
 LIB_DIRS := $(wildcard ./lib/*)
 
 INCLUDE_DIRS := $(LIB_DIRS:./lib/%=./lib/%/include) ./include
@@ -20,15 +18,16 @@ LDFLAGS := $(LIB_DIRS:./lib/%=-L./lib/%) $(LIB_DIRS:./lib/%=-l%) -lreadline
 
 CFLAGS := -Werror -Wall -Wextra
 
-ifeq ($(BUILD_TYPE), debug)
-	LDFLAGS += -g -DDEBUG
-	CFLAGS += -g -DDEBUG
-endif
+debug: LDFLAGS += -g -DDEBUG
+debug:	CFLAGS += -g -DDEBUG
+debug: mk_build_dir minishell
 
-ifeq ($(BUILD_TYPE), release)
-	LDFLAGS += -O3
-	CFLAGS += -O3
-endif
+release: LDFLAGS += -O3
+release: CFLAGS += -O3
+release: mk_build_dir minishell
+
+mk_build_dir:
+	@mkdir -p build
 
 minishell: $(OBJ_FILES)
 	$(CC) $(INCLUDE_FLAGS) $^ -o $@ $(LDFLAGS)
