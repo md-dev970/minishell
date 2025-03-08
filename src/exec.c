@@ -148,7 +148,9 @@ void builtin_export(char *input[])
         t_list *prev;
         char **new_environ = (char **)malloc((e + v + 1) * sizeof(char *));
         if (!new_environ) {
+                #ifdef DEBUG
                 printf("Error: coudn't allocate memory\n");
+                #endif
                 return;
         }
         for (i = 0; i < e; ++i) {
@@ -207,7 +209,9 @@ void builtin_unset(char *input[])
                 }
         }
         int lst_size = ft_lstsize(l);
+        #ifdef DEBUG
         printf("vars to unset: %i\n", lst_size);
+        #endif
         if (lst_size == 0) {
                 ft_lstclear(l, &free);
                 return;
@@ -280,7 +284,9 @@ void builtin_exit(char *input[])
 
 void non_builtin(char *input[])
 {
+        #ifdef DEBUG
         printf("executing non built in\n");
+        #endif
         char *pathname = search_executable(input[0]);
         if (!pathname) {
                 write(STDOUT_FILENO, "minishell: ", 12);
@@ -298,7 +304,9 @@ void execute_command(char *input[], int cin, int cout)
                 exit(12);
         
         char *cmd = input[0];
+        #ifdef DEBUG
         printf("checking command %s\n", cmd);
+        #endif
         switch (ft_strlen(cmd)) {
         case 2:
                 if (!ft_strncmp(cmd, "cd", 2)) {
@@ -354,15 +362,19 @@ static void prepare_command(int in, int out, struct args *ar)
         if (!ar || !ar->clargs || !ar->clargs->content)
                 return;
 
-        char *cmd = (char *)ar->clargs->content;
-
-        printf("executing command %s \n", cmd);
+        #ifdef DEBUG
+        printf("executing command %s \n", (char *)ar->clargs->content);
+        #endif
         char **input = (char **)malloc((ft_lstsize(ar->clargs) + 1) * sizeof(char *));
         t_list *tmp = ar->clargs;
         size_t i = 0;
+        #ifdef DEBUG
         printf("argument list size: %i\n", ft_lstsize(ar->clargs));
+        #endif
         while (tmp) {
+                #ifdef DEBUG
                 printf("arg: %s\n", (char *)tmp->content);
+                #endif
                 input[i++] = ft_strdup((char *)tmp->content);
                 tmp = tmp->next;
         }
@@ -372,7 +384,9 @@ static void prepare_command(int in, int out, struct args *ar)
         }
         input[i] = NULL;
 
+        #ifdef DEBUG
         printf("---------------------------------\nCommand output\n");
+        #endif
 
         tmp = ar->fileHandlers;
         int cout = dup(STDOUT_FILENO);
@@ -388,19 +402,25 @@ static void prepare_command(int in, int out, struct args *ar)
                         tmp = tmp->next;
                         continue;
                 }
+                #ifdef DEBUG
                 write(cout, "file to open: ", 14);
                 write(cout, f->path, ft_strlen(f->path));
                 write(cout, "\n", 2);
+                #endif
                 if (!f->flag) {
                         if ((fd = open(f->path, O_RDONLY)) < 0) {
+                                #ifdef DEBUG
                                 write(cout, "error opening file 0\n", 22);
+                                #endif
                                 exit(1);
                         }
                         close(STDIN_FILENO);
                         dup2(fd, STDIN_FILENO);
                 } else {
                         if ((fd = open(f->path, o_flag(f->flag), 0664)) < 0) {
+                                #ifdef DEBUG
                                 write(cout, "error opening file 1\n", 22);
+                                #endif
                                 exit(2);
                         }
                         close(STDOUT_FILENO);
@@ -408,7 +428,9 @@ static void prepare_command(int in, int out, struct args *ar)
                 }
                 tmp = tmp->next;
         }
+        #ifdef DEBUG
         printf("beginning execution\n");
+        #endif
         execute_command(input, cin, cout);
 
 }
@@ -420,7 +442,9 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
         if (!ast->right) {
                 pid_t id = fork();
                 if (id < 0) {
+                        #ifdef DEBUG
                         printf("fork failed\n");
+                        #endif
                         exit(2);
                 } else if (id) {
                         wait(NULL);
@@ -430,13 +454,16 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                 }
         }
                 
-
+        #ifdef DEBUG
         printf("pipline\n");
+        #endif
         int p[2];
         pipe(p);
         pid_t id = fork();
         if (id < 0) {
+                #ifdef DEBUG
                 printf("fork failed\n");
+                #endif
                 exit(2);
         } else if (id) {
                 close(p[1]);

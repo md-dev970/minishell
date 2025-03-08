@@ -15,7 +15,9 @@ struct node *parser(t_list *lexems)
 
 static struct node *B(t_list **l)
 {
+        #ifdef DEBUG
         printf("currently in B\n");
+        #endif
         if (!l || !(*l))
                 return NULL;
         return S(l);
@@ -24,9 +26,13 @@ static struct node *B(t_list **l)
 
 static struct node *S(t_list **l)
 {
+        #ifdef DEBUG
         printf("currently in S\n");
+        #endif
         if (!(*l)) {
+                #ifdef DEBUG
                 printf("Error\n");
+                #endif
                 return NULL;
         }
         struct token *t = (struct token *)(*l)->content;
@@ -49,7 +55,9 @@ static struct node *S(t_list **l)
 
 static struct node *P(t_list **l)
 {
+        #ifdef DEBUG
         printf("currently in P\n");
+        #endif
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
@@ -67,14 +75,18 @@ static struct node *P(t_list **l)
                 root->right = P(l);
                 return root;
         }
+        #ifdef DEBUG
         printf("Error\n");
+        #endif
         return NULL;
 }
 
 
 static struct node *A(t_list **l)
 {
+        #ifdef DEBUG
         printf("currently in A\n");
+        #endif
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
@@ -112,7 +124,9 @@ static struct node *A(t_list **l)
 
 static struct node *I(t_list **l)
 {
+        #ifdef DEBUG
         printf("currently in I\n");
+        #endif
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
@@ -132,7 +146,9 @@ static struct node *I(t_list **l)
 
 static struct node *O(t_list **l)
 {
+        #ifdef DEBUG
         printf("currently in O\n");
+        #endif
         if (!(*l))
                 return NULL;
         struct token *t = (struct token *)(*l)->content;
@@ -153,16 +169,22 @@ static struct node *O(t_list **l)
 static struct node *F(t_list **l)
 {
         if (!(*l)) {
+                #ifdef DEBUG
                 printf("Error\n");
+                #endif
                 return NULL;
         }
 
         struct token *t = (struct token *)(*l)->content;
         if (t->type != IDENT) {
+                #ifdef DEBUG
                 printf("Error\n");
+                #endif
                 return NULL;
         }
-        printf("currently in F\n");
+        #ifdef DEBUG
+        printf("Currently in F\n");
+        #endif
         struct node *root = (struct node *)malloc(sizeof(struct node));
         root->type = IDENT;
         root->value = t->value;

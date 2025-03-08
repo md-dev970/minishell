@@ -1,11 +1,5 @@
 #include "expander.h"
 
-static void print_lexem(void *lexem)
-{
-        char *s = (char *)lexem;
-        printf("%s\n", s ? s : "");
-}
-
 static int heredoc(char *delimiter)
 {
         char *input = readline(">");
@@ -28,7 +22,9 @@ static char *expand_env(char *str)
         if (!str)
                 return NULL;
         char *s = str;
+        #ifdef DEBUG
         printf("string to expand : %s[end]\n", s);
+        #endif
         char q = '\0';
         size_t len = ft_strlen(s);
         t_list *lst = NULL;
@@ -95,8 +91,9 @@ static char *expand_env(char *str)
                         i = j - 1;
                 }
         }
-        ft_lstiter(lst, &print_lexem);
+        #ifdef DEBUG
         printf("list size: %i\n", ft_lstsize(lst));
+        #endif
         t_list *tmp_lst = lst;
         size_t n = 0;
         while (tmp_lst) {
@@ -114,7 +111,9 @@ static char *expand_env(char *str)
                 ft_strlcat(ret, (char *)tmp_lst->content, n + 1);
                 tmp_lst = tmp_lst->next;
         }
+        #ifdef DEBUG
         printf("result: %s[end]\n", ret);
+        #endif
         ft_lstclear(lst, &free);
         return ret;
 }
@@ -122,14 +121,18 @@ static char *expand_env(char *str)
 static void add_input(struct node *ast, struct args *input)
 {
         if (!ast) {
+                #ifdef DEBUG
                 printf("null\n");
+                #endif
                 return;
         }
         if (ast->type == IDENT)
                 ft_lstadd_back(&(input->clargs), ft_lstnew(expand_env(ast->value)));
 
         if (ast->type == NONE && ast->left->type == DLT) {
+                #ifdef DEBUG
                 printf("delimiter is: %s\n", ast->center->value);
+                #endif
                 struct fileHandler *f = (struct fileHandler *)malloc(sizeof(struct fileHandler));
                 f->flag = heredoc(ast->center->value);
                 f->path = NULL;

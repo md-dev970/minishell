@@ -73,6 +73,9 @@ int lexer(t_list **lst, char* input)
         }
         t_list *tmp_lst = *lst;
         *lst = ft_lstmap(*lst, &generate_token, &free_token);
+        #ifdef DEBUG
+        ft_lstiter(tmp_lst, &print_lexem);
+        #endif
         ft_lstclear(tmp_lst, &free);
         return (open_quote) ? -1 : 0;
 }

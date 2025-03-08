@@ -43,8 +43,10 @@ int main()
                         goto clean;
                 }
                 struct node *ast = parser(lexems);
+                #ifdef DEBUG
                 print_tree(ast);
                 printf("\n");
+                #endif
                 t_list *l = NULL;
                 expander(ast, &l);
                 handle_commands(ast, l);
