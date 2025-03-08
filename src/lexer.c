@@ -8,7 +8,7 @@ void print_lexem(void *lexem)
 
 static int is_separator(char *str, size_t i)
 {
-        char *b[7] = {"echo", "cd", "pwd", "env", "export", "unset", "exit"};
+
         char *s[8] = {" ", ">", "<", "<<", ">>", "|"};
         for (size_t j = 0; j < 6; ++j) {
                 if (str[i] == *s[j])
@@ -23,7 +23,6 @@ int lexer(t_list **lst, char* input)
         size_t len = ft_strlen(input);
         size_t j;
         char open_quote = '\0';
-        t_list *here_doc = NULL;
         char *tmp;
         for(size_t i = 0; i < len; ++i) {
                 switch (input[i])
