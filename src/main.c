@@ -58,10 +58,7 @@ int main()
         }
         rl_clear_history();
         free(inputBuffer);
-        e = 0;
-        while (__environ && __environ[e]) {
-                e++;
-        }
+        e = ft_arrsize((void **)__environ);
         for (size_t i = 0; i < e; ++i) {
                 free(__environ[i]);
         }

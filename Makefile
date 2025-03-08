@@ -2,13 +2,18 @@ INCLUDE_DIRS := ./libft/include ./include
 
 SRC_DIR := ./src
 
-SRC_FILES := $(shell find $(SRC_DIR) -name '*.c')
+BUILD_DIR := ./build
 
-OBJ_FILES := $(SRC_FILES:%.c=%.o)
+SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
+
+OBJ_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
 INCLUDE_FLAGS := $(INCLUDE_DIRS:%=-I%)
 
 
-minishell: $(SRC_FILES)
-	$(CC) $(INCLUDE_FLAGS) $(CFLAGS) -g $^ -o $@ ./libft/libft.a -lreadline
+minishell: $(OBJ_FILES)
+	$(CC) $(INCLUDE_FLAGS) $(CFLAGS) -L./libft -g $^ -o $@ -lft -lreadline
 
+
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
+	$(CC) $(INCLUDE_FLAGS) $(CFLAGS) -c $? -o $@
