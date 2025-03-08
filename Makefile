@@ -1,6 +1,6 @@
-LIB_DIRS := $(wildcard ./lib/*/include)
+LIB_DIRS := $(wildcard ./lib/*)
 
-INCLUDE_DIRS := $(LIB_DIRS) ./include
+INCLUDE_DIRS := $(LIB_DIRS:./lib/%=./lib/%/include) ./include
 
 SRC_DIR := ./src
 
