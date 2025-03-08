@@ -24,7 +24,7 @@ static char *search_executable(char *exec)
         char **pathenv = ft_split(getenv("PATH"), ':');
         if (!pathenv)
                 return NULL;
-        size_t j = 0;
+
         DIR *dir;
         size_t n = ft_strlen(exec);
         char *fullpath = NULL;
@@ -173,7 +173,6 @@ void builtin_unset(char *input[])
         if (!input)
                 return;
         size_t input_size = ft_arrsize((void **)input);
-        size_t v = 0;
         size_t env_size = ft_arrsize((void **)__environ);
         t_list *l = NULL;
         t_list *tmp = l;
@@ -249,7 +248,7 @@ static size_t check_opt(char *opt)
         size_t n = ft_strlen(opt);
         if (n < 2 || opt[0] != '-')
                 return 0;
-        for (int i = 1; i < n; ++i) {
+        for (size_t i = 1; i < n; ++i) {
                 if (opt[i] == 'n')
                         continue;
                 return 0;
@@ -273,6 +272,8 @@ void builtin_echo(char *input[])
 
 void builtin_exit(char *input[])
 {
+        if (!input)
+                exit(0);
         ft_putstr_fd("executing built in exit\n", STDOUT_FILENO);
         exit(0);
 }
