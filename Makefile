@@ -16,6 +16,8 @@ LIB_DIR_FLAGS := $(LIB_DIRS:%=-L%)
 
 LIB_FLAGS := $(LIB_DIRS:./lib/%=-l%) -lreadline
 
+CFLAGS := -Werror -Wall -Wextra
+
 minishell: $(OBJ_FILES)
 	$(CC) $(INCLUDE_FLAGS) $(CFLAGS) $(LIB_DIR_FLAGS) -g $^ -o $@ $(LIB_FLAGS)
 
