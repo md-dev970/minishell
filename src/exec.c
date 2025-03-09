@@ -24,7 +24,11 @@ static int search_dir(DIR *dir, char *target, size_t n)
 
 static char *search_executable(char *exec)
 {
-        if (access(exec, F_OK) == 0)
+        char **tmp = ft_split(exec, '/');
+        size_t e = ft_arrsize((void **)tmp);
+        ft_foreach((void **)tmp, &free);
+        free(tmp);
+        if (e > 1 && access(exec, F_OK) == 0)
                 return ft_strdup(exec);
 
         char **pathenv = ft_split(getenv("PATH"), ':');
@@ -75,7 +79,7 @@ void builtin_cd(char *input[])
         } else if (input[1]) {
                 ft_putstr_fd("minishell: cd: too many arguments\n", STDOUT_FILENO);
         } else {
-                if (!(s = chdir(input[0]))) {
+                if ((s = chdir(input[0]))) {
                         ft_putstr_fd("cd: command failed\n", STDOUT_FILENO);
                         perror("error: ");
                 }
