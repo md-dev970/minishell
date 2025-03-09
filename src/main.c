@@ -19,7 +19,6 @@ int main()
         t_list *lexems = NULL;
 
         inputBuffer = readline("minishell>");
-        char **tmp = __environ;
         size_t e = 0;
         while (__environ && __environ[e]) {
                 e++;
@@ -65,7 +64,6 @@ int main()
                 free(__environ[i]);
         }
         free(__environ);
-        __environ = tmp;
 
         return 0;
 }

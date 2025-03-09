@@ -474,6 +474,8 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                         return;
                 } else {
                         execute_command(prepare_command(in, 1, (struct args *)l->content));
+                        ft_foreach((void **)__environ, &free);
+                        free(__environ);
                         exit(0);
                 }
         }
@@ -503,6 +505,8 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                 close(p[0]);
                 execute_command(prepare_command(in, p[1], (struct args *)l->content));
                 close(p[1]);
+                ft_foreach((void **)__environ, &free);
+                free(__environ);
                 exit(0);
         }
 }

@@ -1,3 +1,4 @@
-Implement debug and release versions.
-Fix export assign env vars with invalid identifiers.
-Fix memory leak : free __environ memory if non built-in command fails
+[x] Implement debug and release versions.
+[] Fix export assign env vars with invalid identifiers.
+[x] Fix memory leak : free __environ memory after non built-in command fails
+[x] Fix memory leak : free __environ memory upon built-in exit
