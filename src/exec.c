@@ -1,5 +1,11 @@
 #include "exec.h"
 
+struct command_attrs {
+        int cin;
+        int cout;
+        char **input;
+};
+
 static int search_dir(DIR *dir, char *target, size_t n)
 {
         struct dirent *d;
@@ -46,10 +52,12 @@ static char *search_executable(char *exec)
         return fullpath;
 }
 
+
 static int o_flag(int f)
 {
         return O_WRONLY | O_CREAT | ((f < 2) ? O_TRUNC : O_APPEND);
 }
+
 
 void builtin_pwd()
 {
@@ -247,6 +255,7 @@ void builtin_unset(char *input[])
         return;
 }
 
+
 static size_t check_opt(char *opt)
 {
         size_t n = ft_strlen(opt);
@@ -298,10 +307,19 @@ void non_builtin(char *input[])
         exit(s);
 }
 
-void execute_command(char *input[], int cin, int cout)
+void execute_command(struct command_attrs *ca)
 {
-        if (!input || !input[0])
+        if (!ca)
+                exit(11);
+        char **input = ca->input;
+        int cin  = ca->cin;
+        int cout = ca->cout;
+        if (!input || !input[0]) {
+                ft_foreach((void **)input, &free);
+                free(ca);
                 exit(12);
+        }
+                
         
         char *cmd = input[0];
         #ifdef DEBUG
@@ -353,14 +371,15 @@ void execute_command(char *input[], int cin, int cout)
         cleanup:
         ft_foreach((void **)input, &free);
         free(input);
+        free(ca);
         dup2(cin, STDIN_FILENO);
         dup2(cout, STDOUT_FILENO);
 }
 
-static void prepare_command(int in, int out, struct args *ar)
+static struct command_attrs *prepare_command(int in, int out, struct args *ar)
 {
         if (!ar || !ar->clargs || !ar->clargs->content)
-                return;
+                return NULL;
 
         #ifdef DEBUG
         printf("executing command %s \n", (char *)ar->clargs->content);
@@ -431,7 +450,11 @@ static void prepare_command(int in, int out, struct args *ar)
         #ifdef DEBUG
         printf("beginning execution\n");
         #endif
-        execute_command(input, cin, cout);
+        struct command_attrs *ret = (struct command_attrs *)malloc(sizeof(struct command_attrs));
+        ret->cin = cin;
+        ret->cout = cout;
+        ret->input = input;
+        return ret;
 
 }
 
@@ -450,7 +473,8 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                         wait(NULL);
                         return;
                 } else {
-                        prepare_command(in, 1, (struct args *)l->content);
+                        execute_command(prepare_command(in, 1, (struct args *)l->content));
+                        exit(0);
                 }
         }
                 
@@ -477,7 +501,7 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                 wait(NULL);
         } else {
                 close(p[0]);
-                prepare_command(in, p[1], (struct args *)l->content);
+                execute_command(prepare_command(in, p[1], (struct args *)l->content));
                 close(p[1]);
                 exit(0);
         }
@@ -495,38 +519,38 @@ void handle_commands(struct node *ast, t_list *l)
         switch (ft_strlen(cmd)) {
         case 2:
                 if (!ft_strncmp(cmd, "cd", 2)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                         
                 break;
         case 3:
                 if (!ft_strncmp(cmd, "pwd", 3)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 } else if (!ft_strncmp(cmd, "env", 3)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         case 4:
                 if (!ft_strncmp(cmd, "echo", 4)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 } else if (!ft_strncmp(cmd, "exit", 4)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         case 5:
                 if (!ft_strncmp(cmd, "unset", 5)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         case 6:
                 if (!ft_strncmp(cmd, "export", 6)) {
-                        prepare_command(0, 1, (struct args*)l->content);
+                        execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
