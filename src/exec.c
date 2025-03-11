@@ -1,4 +1,5 @@
 #include "exec.h"
+#include "errno.h"
 
 struct command_attrs {
         int cin;
@@ -63,15 +64,16 @@ static int o_flag(int f)
 }
 
 
-void builtin_pwd()
+int builtin_pwd()
 {
         char *cwd = getcwd(NULL, 0);
         ft_putstr_fd(cwd, STDOUT_FILENO);
         ft_putchar_fd('\n', STDOUT_FILENO);
         free(cwd);
+        return 0;
 }
 
-void builtin_cd(char *input[])
+int builtin_cd(char *input[])
 {
         int s;
         if (!input || !input[0] || *input[0] == '~') {
@@ -84,28 +86,32 @@ void builtin_cd(char *input[])
                         perror("error: ");
                 }
         }
+        return s;
 }
 
 
-void builtin_env()
+int builtin_env()
 {
         size_t i = 0;
         while (__environ[i])
                 printf("%s\n", __environ[i++]);
+        return 0;
 }
 
 
-void builtin_export(char *input[])
+int builtin_export(char *input[])
 {
         if (!input)
-                return;
+                return 0;
+        int s = 0;
         size_t i = 0;
         size_t v = 0;
         t_list *l = NULL;
         char **tmp;
         while (input[i]) {
                 if (!ft_isalpha(*input[i]) && *input[i] != '_') {
-                        printf("minishell: '%s' is not a valid identifier\n", input[i]);
+                        printf("minishell: export: '%s' is not a valid identifier\n", input[i]);
+                        s = 1;
                         i++;
                         continue;
                 }
@@ -163,7 +169,7 @@ void builtin_export(char *input[])
                 #ifdef DEBUG
                 printf("Error: coudn't allocate memory\n");
                 #endif
-                return;
+                return 2;
         }
         for (i = 0; i < e; ++i) {
                 new_environ[i] = ft_strdup(__environ[i]);
@@ -179,13 +185,14 @@ void builtin_export(char *input[])
         }
         new_environ[e + v] = NULL;
         __environ = new_environ;
+        return s;
 }
 
 
-void builtin_unset(char *input[])
+int builtin_unset(char *input[])
 {
         if (!input)
-                return;
+                return 0;
         size_t input_size = ft_arrsize((void **)input);
         size_t env_size = ft_arrsize((void **)__environ);
         t_list *l = NULL;
@@ -226,7 +233,7 @@ void builtin_unset(char *input[])
         #endif
         if (lst_size == 0) {
                 ft_lstclear(l, &free);
-                return;
+                return 0;
         }
 
         char **new_environ = (char **)malloc((env_size - lst_size + 1) * sizeof(char *));
@@ -256,7 +263,7 @@ void builtin_unset(char *input[])
         ft_lstclear(l, &free);
         new_environ[nv] = NULL;
         __environ = new_environ;
-        return;
+        return 0;
 }
 
 
@@ -273,17 +280,18 @@ static size_t check_opt(char *opt)
         return 1;
 }
 
-void builtin_echo(char *input[])
+int builtin_echo(char *input[])
 {
         if (!input || !input[0]) {
                 printf("\n");
-                return;
+                return 0;
         }
         size_t i;
         char newline = ((i = check_opt(input[0])) == 0) ? '\n' : '\0';
         while (input[i])
                 printf("%s ", input[i++]);
         printf("%c", newline);
+        return 0;
 }
 
 
@@ -307,21 +315,22 @@ void non_builtin(char *input[])
                 ft_putstr_fd(": command not found\n", STDOUT_FILENO);
                 exit(1);
         }
-        int s = execve(pathname, input, __environ);
-        exit(s);
+        execve(pathname, input, __environ);
+        exit(1);
 }
 
-void execute_command(struct command_attrs *ca)
+int execute_command(struct command_attrs *ca)
 {
         if (!ca)
-                exit(11);
+                return 1;
+        int s = 0;
         char **input = ca->input;
         int cin  = ca->cin;
         int cout = ca->cout;
         if (!input || !input[0]) {
                 ft_foreach((void **)input, &free);
                 free(ca);
-                exit(12);
+                exit(1);
         }
                 
         
@@ -332,23 +341,23 @@ void execute_command(struct command_attrs *ca)
         switch (ft_strlen(cmd)) {
         case 2:
                 if (!ft_strncmp(cmd, "cd", 2)) {
-                        builtin_cd(input + 1);
+                        s = builtin_cd(input + 1);
                         goto cleanup;
                 }
                         
                 break;
         case 3:
                 if (!ft_strncmp(cmd, "pwd", 3)) {
-                        builtin_pwd();
+                        s = builtin_pwd();
                         goto cleanup;
                 } else if (!ft_strncmp(cmd, "env", 3)) {
-                        builtin_env();
+                        s = builtin_env();
                         goto cleanup;
                 }
                 break;
         case 4:
                 if (!ft_strncmp(cmd, "echo", 4)) {
-                        builtin_echo(input + 1);
+                        s = builtin_echo(input + 1);
                         goto cleanup;
                 } else if (!ft_strncmp(cmd, "exit", 4)) {
                         builtin_exit(input + 1);
@@ -357,13 +366,13 @@ void execute_command(struct command_attrs *ca)
                 break;
         case 5:
                 if (!ft_strncmp(cmd, "unset", 5)) {
-                        builtin_unset(input + 1);
+                        s = builtin_unset(input + 1);
                         goto cleanup;
                 }
                 break;
         case 6:
                 if (!ft_strncmp(cmd, "export", 6)) {
-                        builtin_export(input + 1);
+                        s = builtin_export(input + 1);
                         goto cleanup;
                 }
                         
@@ -378,6 +387,7 @@ void execute_command(struct command_attrs *ca)
         free(ca);
         dup2(cin, STDIN_FILENO);
         dup2(cout, STDOUT_FILENO);
+        return s;
 }
 
 static struct command_attrs *prepare_command(int in, int out, struct args *ar)
@@ -462,7 +472,7 @@ static struct command_attrs *prepare_command(int in, int out, struct args *ar)
 
 }
 
-void handle_pipeline(struct node *ast, int in, t_list *l)
+void handle_pipeline(struct node *ast, int in, t_list *l, int *last_exit_status)
 {
         if (!ast)
                 return;
@@ -474,13 +484,19 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                         #endif
                         exit(2);
                 } else if (id) {
-                        wait(NULL);
+                        wait(last_exit_status);
+                        if (WIFEXITED(*last_exit_status))
+                                *last_exit_status = WEXITSTATUS(*last_exit_status);
+                        else if (WIFSIGNALED(*last_exit_status))
+                                *last_exit_status = WTERMSIG(*last_exit_status);
+                        else if (WIFSTOPPED(*last_exit_status))
+                                *last_exit_status = WSTOPSIG(*last_exit_status);
                         return;
                 } else {
-                        execute_command(prepare_command(in, 1, (struct args *)l->content));
+                        int s = execute_command(prepare_command(in, 1, (struct args *)l->content));
                         ft_foreach((void **)__environ, &free);
                         free(__environ);
-                        exit(0);
+                        exit(s);
                 }
         }
                 
@@ -502,68 +518,74 @@ void handle_pipeline(struct node *ast, int in, t_list *l)
                 exit(2);
         } else if (id) {
                 close(p[1]);
-                handle_pipeline(ast->right->center, p[0], l->next);
+                handle_pipeline(ast->right->center, p[0], l->next, last_exit_status);
                 close(p[0]);
-                wait(NULL);
+                wait(last_exit_status);
+                if (WIFEXITED(*last_exit_status))
+                        *last_exit_status = WEXITSTATUS(*last_exit_status);
+                else if (WIFSIGNALED(*last_exit_status))
+                        *last_exit_status = WTERMSIG(*last_exit_status);
+                else if (WIFSTOPPED(*last_exit_status))
+                        *last_exit_status = WSTOPSIG(*last_exit_status);
         } else {
                 close(p[0]);
-                execute_command(prepare_command(in, p[1], (struct args *)l->content));
+                int s = execute_command(prepare_command(in, p[1], (struct args *)l->content));
                 close(p[1]);
                 ft_foreach((void **)__environ, &free);
                 free(__environ);
-                exit(0);
+                exit(s);
         }
 }
 
-void handle_commands(struct node *ast, t_list *l)
+void handle_commands(struct node *ast, t_list *l, int *last_exit_status)
 {
         if (!ast)
                 return;
         if (ast->right) {
-                handle_pipeline(ast, 0, l);
+                handle_pipeline(ast, 0, l, last_exit_status);
                 return;
         }
         char *cmd = ast->left->value;
         switch (ft_strlen(cmd)) {
         case 2:
                 if (!ft_strncmp(cmd, "cd", 2)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                         
                 break;
         case 3:
                 if (!ft_strncmp(cmd, "pwd", 3)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 } else if (!ft_strncmp(cmd, "env", 3)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         case 4:
                 if (!ft_strncmp(cmd, "echo", 4)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 } else if (!ft_strncmp(cmd, "exit", 4)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         case 5:
                 if (!ft_strncmp(cmd, "unset", 5)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         case 6:
                 if (!ft_strncmp(cmd, "export", 6)) {
-                        execute_command(prepare_command(0, 1, (struct args*)l->content));
+                        *last_exit_status = execute_command(prepare_command(0, 1, (struct args*)l->content));
                         return;
                 }
                 break;
         default:
                 break;
         }
-        handle_pipeline(ast, 0, l);
+        handle_pipeline(ast, 0, l, last_exit_status);
 }

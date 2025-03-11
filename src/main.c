@@ -30,6 +30,7 @@ int main()
         }
 
         __environ = env;
+        int last_exit_status = 0;
         while(quit == 0) {
                 add_history(inputBuffer);
                 if (strcmp(inputBuffer, "exit") == 0) {
@@ -47,8 +48,8 @@ int main()
                 printf("\n");
                 #endif
                 t_list *l = NULL;
-                expander(ast, &l);
-                handle_commands(ast, l);
+                expander(ast, &l, last_exit_status);
+                handle_commands(ast, l, &last_exit_status);
                 ft_lstclear(l, &free_args);
                 free_tree(ast);
                 clean:

@@ -22,7 +22,7 @@ static int heredoc(char *delimiter)
         return p[0];
 }
 
-static char *expand_env(char *str)
+static char *expand_env(char *str, int last_exit_status)
 {
         if (!str)
                 return NULL;
@@ -83,8 +83,15 @@ static char *expand_env(char *str)
                                         while (k < len && s[k] != '=' && s[k] != '\'' && s[k] != ' ' && s[k] != '\"')
                                                 k++;
                                         tmp = ft_substr(s, j + 1, k - j - 1);
-                                        if (k - j > 1)
-                                                ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                        if (k - j > 1) {
+                                                if ((k - j) == 2 && *tmp == '?') {
+                                                        ft_lstadd_back(&lst, ft_lstnew(ft_itoa(last_exit_status)));
+                                                } else {
+                                                        ft_lstadd_back(&lst, ft_lstnew(ft_strdup(getenv(tmp))));
+                                                }
+                                                
+                                        }
+                                                
                                         free(tmp);
                                         j = k + 1;
                                         i = j;
@@ -123,7 +130,7 @@ static char *expand_env(char *str)
         return ret;
 }
 
-static void add_input(struct node *ast, struct args *input)
+static void add_input(struct node *ast, struct args *input, int last_exit_status)
 {
         if (!ast) {
                 #ifdef DEBUG
@@ -132,7 +139,7 @@ static void add_input(struct node *ast, struct args *input)
                 return;
         }
         if (ast->type == IDENT)
-                ft_lstadd_back(&(input->clargs), ft_lstnew(expand_env(ast->value)));
+                ft_lstadd_back(&(input->clargs), ft_lstnew(expand_env(ast->value, last_exit_status)));
 
         if (ast->type == NONE && ast->left->type == DLT) {
                 #ifdef DEBUG
@@ -169,11 +176,11 @@ static void add_input(struct node *ast, struct args *input)
                 return;
         }
 
-        add_input(ast->left, input);
-        add_input(ast->center, input);
+        add_input(ast->left, input, last_exit_status);
+        add_input(ast->center, input, last_exit_status);
 }
 
-static struct args *expand_input(struct node *ast)
+static struct args *expand_input(struct node *ast, int last_exit_status)
 {
         if (!ast)
                 return NULL;
@@ -181,16 +188,16 @@ static struct args *expand_input(struct node *ast)
         struct args *a = (struct args *)malloc(sizeof(struct args));
         a->clargs = NULL;
         a->fileHandlers = NULL;
-        add_input(ast, a);
+        add_input(ast, a, last_exit_status);
         return a;
 }
 
-void expander(struct node *ast, t_list **l)
+void expander(struct node *ast, t_list **l, int last_exit_status)
 {
         if (!ast)
                 return;
-        struct args *ar = expand_input(ast);
+        struct args *ar = expand_input(ast, last_exit_status);
         ft_lstadd_back(l, ft_lstnew(ar));
         if (ast->right)
-                expander(ast->right->center, l);
+                expander(ast->right->center, l, last_exit_status);
 }
