@@ -75,11 +75,12 @@ int builtin_pwd()
 
 int builtin_cd(char *input[])
 {
-        int s;
+        int s = 0;
         if (!input || !input[0] || *input[0] == '~') {
                 s = chdir(getenv("HOME"));
         } else if (input[1]) {
                 ft_putstr_fd("minishell: cd: too many arguments\n", STDOUT_FILENO);
+                s = 1;
         } else {
                 if ((s = chdir(input[0]))) {
                         ft_putstr_fd("cd: command failed\n", STDOUT_FILENO);
@@ -108,8 +109,24 @@ int builtin_export(char *input[])
         size_t v = 0;
         t_list *l = NULL;
         char **tmp;
-        while (input[i]) {
+        int valid;
+        while (input[i])
+        {
+
                 if (!ft_isalpha(*input[i]) && *input[i] != '_') {
+                        printf("minishell: export: '%s' is not a valid identifier\n", input[i]);
+                        s = 1;
+                        i++;
+                        continue;
+                }
+                valid = 1;
+                for (size_t j = 1; j < ft_strlen(input[i]); ++j) {
+                        if (!ft_isalnum(input[i][j])) {
+                                valid = 0;
+                                break;
+                        }       
+                }
+                if (!valid) {
                         printf("minishell: export: '%s' is not a valid identifier\n", input[i]);
                         s = 1;
                         i++;
@@ -310,7 +327,7 @@ void non_builtin(char *input[])
         #endif
         char *pathname = search_executable(input[0]);
         if (!pathname) {
-                ft_putstr_fd("minishell", STDOUT_FILENO);
+                ft_putstr_fd("minishell: ", STDOUT_FILENO);
                 ft_putstr_fd(input[0], STDOUT_FILENO);
                 ft_putstr_fd(": command not found\n", STDOUT_FILENO);
                 ft_foreach((void **)__environ, &free);
