@@ -313,9 +313,13 @@ void non_builtin(char *input[])
                 ft_putstr_fd("minishell", STDOUT_FILENO);
                 ft_putstr_fd(input[0], STDOUT_FILENO);
                 ft_putstr_fd(": command not found\n", STDOUT_FILENO);
+                ft_foreach((void **)__environ, &free);
+                free(__environ);
                 exit(1);
         }
         execve(pathname, input, __environ);
+        ft_foreach((void **)__environ, &free);
+        free(__environ);
         exit(1);
 }
 
