@@ -120,11 +120,13 @@ int builtin_export(char *input[])
                         continue;
                 }
                 valid = 1;
-                for (size_t j = 1; j < ft_strlen(input[i]); ++j) {
+                size_t j = 0;
+                while (input[i][j] && input[i][j] != '=') {
                         if (!ft_isalnum(input[i][j])) {
                                 valid = 0;
                                 break;
-                        }       
+                        }
+                        j++;
                 }
                 if (!valid) {
                         printf("minishell: export: '%s' is not a valid identifier\n", input[i]);
@@ -167,7 +169,7 @@ int builtin_export(char *input[])
                         break;
                 }
                         
-                size_t j = 0;
+                j = 0;
                 while (tmp && tmp[j])
                         free(tmp[j++]);
                 free(tmp);   
