@@ -38,7 +38,7 @@ Key features include:
 
 ### Dependencies
 Minishell requires the readline library in order to function.
-To install it
+You can install it using your favorite package manager.
 
 ### Build
 To build the debug version of the minishell, ```cd``` into the project's root directory and run:
