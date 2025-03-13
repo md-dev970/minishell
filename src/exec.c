@@ -1,11 +1,14 @@
+#define _POSIX_C_SOURCE 200809L
 #include "exec.h"
-#include "errno.h"
+#include <errno.h>
+#include <signal.h>
 
 struct command_attrs {
         int cin;
         int cout;
         char **input;
 };
+
 
 static int search_dir(DIR *dir, char *target, size_t n)
 {
@@ -22,6 +25,7 @@ static int search_dir(DIR *dir, char *target, size_t n)
         closedir(dir);
         return 0;
 }
+
 
 static char *search_executable(char *exec)
 {
@@ -72,6 +76,7 @@ int builtin_pwd()
         free(cwd);
         return 0;
 }
+
 
 int builtin_cd(char *input[])
 {
@@ -299,6 +304,7 @@ static size_t check_opt(char *opt)
         return 1;
 }
 
+
 int builtin_echo(char *input[])
 {
         if (!input || !input[0]) {
@@ -322,6 +328,7 @@ void builtin_exit(char *input[])
         exit(0);
 }
 
+
 void non_builtin(char *input[])
 {
         #ifdef DEBUG
@@ -341,6 +348,7 @@ void non_builtin(char *input[])
         free(__environ);
         exit(1);
 }
+
 
 int execute_command(struct command_attrs *ca)
 {
@@ -412,6 +420,7 @@ int execute_command(struct command_attrs *ca)
         dup2(cout, STDOUT_FILENO);
         return s;
 }
+
 
 static struct command_attrs *prepare_command(int in, int out, struct args *ar)
 {
@@ -495,11 +504,18 @@ static struct command_attrs *prepare_command(int in, int out, struct args *ar)
 
 }
 
+
 void handle_pipeline(struct node *ast, int in, t_list *l, int *last_exit_status)
 {
         if (!ast)
                 return;
         if (!ast->right) {
+                struct sigaction old_sa;
+                sigset_t s;
+                sigemptyset(&s);
+                old_sa.sa_mask = s;
+                old_sa.sa_flags = 0;
+                old_sa.sa_handler = SIG_DFL;
                 pid_t id = fork();
                 if (id < 0) {
                         #ifdef DEBUG
@@ -516,6 +532,7 @@ void handle_pipeline(struct node *ast, int in, t_list *l, int *last_exit_status)
                                 *last_exit_status = WSTOPSIG(*last_exit_status);
                         return;
                 } else {
+                        sigaction(SIGINT, &old_sa, NULL);
                         int s = execute_command(prepare_command(in, 1, (struct args *)l->content));
                         ft_foreach((void **)__environ, &free);
                         free(__environ);
@@ -559,6 +576,7 @@ void handle_pipeline(struct node *ast, int in, t_list *l, int *last_exit_status)
                 exit(s);
         }
 }
+
 
 void handle_commands(struct node *ast, t_list *l, int *last_exit_status)
 {
